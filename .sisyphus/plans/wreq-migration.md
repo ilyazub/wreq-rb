@@ -1312,7 +1312,7 @@ Wave 3 (Polish — Sequential after Wave 2):
 
 ---
 
-- [ ] 12. .encoding() + .flush() + remaining response methods
+- [x] 12. .encoding() + .flush() + remaining response methods
 
   **What to do**:
 

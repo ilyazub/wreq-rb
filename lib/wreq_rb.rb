@@ -16,6 +16,20 @@ module Wreq
       def flush
         self
       end
+
+      def cookies
+        return {} unless headers
+        cookies_hash = {}
+        headers.each do |key, value|
+          if key.downcase == "set-cookie"
+            # Simple extraction: name=value
+            if value =~ /^([^=]+)=([^;]+)/
+              cookies_hash[$1] = $2
+            end
+          end
+        end
+        cookies_hash
+      end
     end
 
     class << self

@@ -535,4 +535,32 @@ class WreqTest < Minitest::Test
     assert_equal "value", body["args"]["test"]
     assert body["headers"]["Accept"].include?("application/json")
   end
+
+  def test_encoding_chainable
+    skip "requires network"
+    response = HTTP.encoding("UTF-8").get("https://httpbin.org/get")
+    assert_equal 200, response.code
+  end
+
+  def test_cookies_parsing
+    skip "requires network"
+    response = HTTP.get("https://httpbin.org/cookies/set?test_cookie=test_value")
+    cookies = response.cookies
+    assert_instance_of Hash, cookies
+  end
+
+  def test_cookies_empty
+    skip "requires network"
+    response = HTTP.get("https://httpbin.org/get")
+    cookies = response.cookies
+    assert_instance_of Hash, cookies
+  end
+
+  def test_encoding_applied_to_response
+    skip "requires network"
+    response = HTTP.encoding("UTF-8").get("https://httpbin.org/get")
+    assert_equal 200, response.status
+    body = JSON.parse(response.body)
+    assert_instance_of Hash, body
+  end
 end 

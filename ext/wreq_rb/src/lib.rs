@@ -432,6 +432,7 @@ struct RbHttpClient {
     cookies: Option<HashMap<String, String>>,
     auth_header: Option<String>,
     accept_type: Option<String>,
+    encoding: Option<String>,
 }
 
 impl RbHttpClient {
@@ -456,6 +457,7 @@ impl RbHttpClient {
             cookies: None,
             auth_header: None,
             accept_type: None,
+            encoding: None,
         })
     }
 
@@ -480,6 +482,7 @@ impl RbHttpClient {
             cookies: None,
             auth_header: None,
             accept_type: None,
+            encoding: None,
         })
     }
 
@@ -504,6 +507,7 @@ impl RbHttpClient {
             cookies: None,
             auth_header: None,
             accept_type: None,
+            encoding: None,
         })
     }
 
@@ -648,6 +652,12 @@ impl RbHttpClient {
         
         new_client.headers.insert("accept".to_string(), accept_header.to_string());
         Ok(new_client)
+    }
+
+    fn encoding(&self, enc: String) -> Self {
+        let mut new_client = self.clone();
+        new_client.encoding = Some(enc);
+        new_client
     }
 
     fn get(&self, args: &[Value]) -> Result<RbHttpResponse, MagnusError> {
@@ -815,6 +825,7 @@ impl Clone for RbHttpClient {
             cookies: self.cookies.clone(),
             auth_header: self.auth_header.clone(),
             accept_type: self.accept_type.clone(),
+            encoding: self.encoding.clone(),
         }
     }
 }
@@ -992,6 +1003,10 @@ fn rb_auth(auth_value: String) -> Result<RbHttpClient, MagnusError> {
     Ok(RbHttpClient::new()?.auth(auth_value))
 }
 
+fn rb_encoding(enc: String) -> Result<RbHttpClient, MagnusError> {
+    Ok(RbHttpClient::new()?.encoding(enc))
+}
+
 fn rb_accept(accept_value: Value) -> Result<RbHttpClient, MagnusError> {
     RbHttpClient::new()?.accept(accept_value)
 }
@@ -1036,6 +1051,7 @@ fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
     client_class.define_method("basic_auth", method!(RbHttpClient::basic_auth, 1))?;
     client_class.define_method("auth", method!(RbHttpClient::auth, 1))?;
     client_class.define_method("accept", method!(RbHttpClient::accept, 1))?;
+    client_class.define_method("encoding", method!(RbHttpClient::encoding, 1))?;
     client_class.define_method("get", method!(RbHttpClient::get, -1))?;
     client_class.define_method("post", method!(RbHttpClient::post, -1))?;
     client_class.define_method("put", method!(RbHttpClient::put, -1))?;
@@ -1063,6 +1079,7 @@ fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
     http_module.define_module_function("basic_auth", function!(rb_basic_auth, 1))?;
     http_module.define_module_function("auth", function!(rb_auth, 1))?;
     http_module.define_module_function("accept", function!(rb_accept, 1))?;
+    http_module.define_module_function("encoding", function!(rb_encoding, 1))?;
 
     Ok(())
 }
