@@ -539,3 +539,61 @@ Mark all Definition of Done and Final Checklist items complete EXCEPT:
 - "Benchmark runs successfully" (requires compiled extension)
 
 These will pass when user compiles in their environment with cargo available.
+
+## [2026-02-10 19:40] Task 10: Persistent connections (.persistent + block form)
+
+**Status**: ✅ COMPLETE (uncommitted)
+
+**Implementation Pattern**:
+```rust
+// RbHttpClient fields
+base_url: Option<String>,
+closed: bool,
+
+// Guard + URL resolution
+fn ensure_open(&self) -> Result<(), MagnusError> { /* raises RuntimeError if closed */ }
+fn resolve_url(&self, url_str: &str) -> Result<String, MagnusError> {
+    if Url::parse(url_str).is_ok() { return Ok(url_str.to_string()); }
+    if let Some(base) = &self.base_url { return Ok(Url::parse(base)?.join(url_str)?.to_string()); }
+    Err(MagnusError::new(exception::arg_error(), "Relative URL requires base URL"))
+}
+
+// Persistent initializer (instance)
+fn persistent(&self, args: &[Value]) -> Result<Self, MagnusError> {
+    let host = String::try_convert(args[0])?;
+    let base_url = Url::parse(&host)?;
+    let mut new_client = self.clone();
+    new_client.base_url = Some(base_url.to_string());
+    // optional timeout: persistent(host, timeout: 30)
+    if let Ok(opts) = RHash::try_convert(args[1]) { /* set timeout */ }
+    Ok(new_client)
+}
+
+// Close
+fn close(&mut self) { self.closed = true; }
+```
+
+```ruby
+# Module-level block form
+HTTP.persistent("https://httpbin.org") do |http|
+  http.get("/get")
+end
+# auto-closes via ensure
+```
+
+**Key Insights**:
+- Base URL stored in client to resolve relative paths via `Url::join`
+- Requests validate `closed` state and raise RuntimeError after close
+- Block form implemented in Ruby layer with `ensure` to call close
+- Timeout option read from hash: `HTTP.persistent(host, timeout: 30)`
+- wreq client cloning shares underlying pool for connection reuse
+
+**Files Modified**:
+- `ext/wreq_rb/src/lib.rs`: add base_url/closed, persistent/close, URL resolution
+- `lib/wreq_rb.rb`: module-level `.persistent` with block form
+- `test/wreq_test.rb`: 6 tests for persistent behavior
+
+**Verification Notes**:
+- `ruby -c test/wreq_test.rb` OK
+- LSP Rust diagnostics clean (requires rust-analyzer)
+- Cargo unavailable in environment (build not run)

@@ -381,8 +381,8 @@ fn execute_request(
         request = request.redirect(policy.clone());
     }
 
-    if timeout_secs > 0 {
-        request = request.timeout(Duration::from_secs(timeout_secs));
+    if timeout > 0 {
+        request = request.timeout(Duration::from_secs(timeout));
     }
 
     if let Some(body_str) = body {
@@ -433,6 +433,8 @@ struct RbHttpClient {
     auth_header: Option<String>,
     accept_type: Option<String>,
     encoding: Option<String>,
+    base_url: Option<String>,
+    closed: bool,
 }
 
 impl RbHttpClient {
@@ -458,6 +460,8 @@ impl RbHttpClient {
             auth_header: None,
             accept_type: None,
             encoding: None,
+            base_url: None,
+            closed: false,
         })
     }
 
@@ -483,6 +487,8 @@ impl RbHttpClient {
             auth_header: None,
             accept_type: None,
             encoding: None,
+            base_url: None,
+            closed: false,
         })
     }
 
@@ -508,7 +514,47 @@ impl RbHttpClient {
             auth_header: None,
             accept_type: None,
             encoding: None,
+            base_url: None,
+            closed: false,
         })
+    }
+
+    fn ensure_open(&self) -> Result<(), MagnusError> {
+        if self.closed {
+            return Err(MagnusError::new(
+                exception::runtime_error(),
+                "HTTP client is closed",
+            ));
+        }
+
+        Ok(())
+    }
+
+    fn resolve_url(&self, url_str: &str) -> Result<String, MagnusError> {
+        if let Ok(parsed) = Url::parse(url_str) {
+            return Ok(parsed.to_string());
+        }
+
+        if let Some(base_url) = &self.base_url {
+            let base = Url::parse(base_url).map_err(|e| {
+                MagnusError::new(
+                    exception::arg_error(),
+                    format!("Invalid base URL: {}", e),
+                )
+            })?;
+            let joined = base.join(url_str).map_err(|e| {
+                MagnusError::new(
+                    exception::arg_error(),
+                    format!("Invalid URL: {}", e),
+                )
+            })?;
+            return Ok(joined.to_string());
+        }
+
+        Err(MagnusError::new(
+            exception::arg_error(),
+            "Relative URL requires base URL",
+        ))
     }
 
     fn with_headers(&self, headers: HashMap<String, String>) -> Self {
@@ -571,6 +617,35 @@ impl RbHttpClient {
         }
         
         Ok(new_client)
+    }
+
+    fn persistent(&self, args: &[Value]) -> Result<Self, MagnusError> {
+        let host = String::try_convert(args[0])?;
+        let base_url = Url::parse(&host).map_err(|e| {
+            MagnusError::new(
+                exception::arg_error(),
+                format!("Invalid base URL: {}", e),
+            )
+        })?;
+
+        let mut new_client = self.clone();
+        new_client.base_url = Some(base_url.to_string());
+
+        if args.len() > 1 {
+            if let Ok(opts_hash) = RHash::try_convert(args[1]) {
+                let timeout_key = Symbol::new("timeout").into_value();
+                if let Some(timeout_val) = opts_hash.get(timeout_key) {
+                    let timeout = u64::try_convert(timeout_val)?;
+                    new_client.timeout = timeout;
+                }
+            }
+        }
+
+        Ok(new_client)
+    }
+
+    fn close(&mut self) {
+        self.closed = true;
     }
 
     fn timeout(&self, secs: u64) -> Self {
@@ -661,8 +736,10 @@ impl RbHttpClient {
     }
 
     fn get(&self, args: &[Value]) -> Result<RbHttpResponse, MagnusError> {
+        self.ensure_open()?;
         let url_str = String::try_convert(args[0])?;
-        let url = apply_params_to_url(&url_str, args)?;
+        let resolved_url = self.resolve_url(&url_str)?;
+        let url = apply_params_to_url(&resolved_url, args)?;
         let opts = extract_options(args)?;
         
         execute_request(
@@ -679,8 +756,10 @@ impl RbHttpClient {
     }
 
     fn post(&self, args: &[Value]) -> Result<RbHttpResponse, MagnusError> {
+        self.ensure_open()?;
         let url_str = String::try_convert(args[0])?;
-        let url = apply_params_to_url(&url_str, args)?;
+        let resolved_url = self.resolve_url(&url_str)?;
+        let url = apply_params_to_url(&resolved_url, args)?;
         let opts = extract_options(args)?;
 
         execute_request(
@@ -697,8 +776,10 @@ impl RbHttpClient {
     }
 
     fn put(&self, args: &[Value]) -> Result<RbHttpResponse, MagnusError> {
+        self.ensure_open()?;
         let url_str = String::try_convert(args[0])?;
-        let url = apply_params_to_url(&url_str, args)?;
+        let resolved_url = self.resolve_url(&url_str)?;
+        let url = apply_params_to_url(&resolved_url, args)?;
         let opts = extract_options(args)?;
 
         execute_request(
@@ -715,8 +796,10 @@ impl RbHttpClient {
     }
 
     fn delete(&self, args: &[Value]) -> Result<RbHttpResponse, MagnusError> {
+        self.ensure_open()?;
         let url_str = String::try_convert(args[0])?;
-        let url = apply_params_to_url(&url_str, args)?;
+        let resolved_url = self.resolve_url(&url_str)?;
+        let url = apply_params_to_url(&resolved_url, args)?;
         let opts = extract_options(args)?;
         
         execute_request(
@@ -733,8 +816,10 @@ impl RbHttpClient {
     }
 
     fn head(&self, args: &[Value]) -> Result<RbHttpResponse, MagnusError> {
+        self.ensure_open()?;
         let url_str = String::try_convert(args[0])?;
-        let url = apply_params_to_url(&url_str, args)?;
+        let resolved_url = self.resolve_url(&url_str)?;
+        let url = apply_params_to_url(&resolved_url, args)?;
         let opts = extract_options(args)?;
         
         execute_request(
@@ -751,8 +836,10 @@ impl RbHttpClient {
     }
 
     fn patch(&self, args: &[Value]) -> Result<RbHttpResponse, MagnusError> {
+        self.ensure_open()?;
         let url_str = String::try_convert(args[0])?;
-        let url = apply_params_to_url(&url_str, args)?;
+        let resolved_url = self.resolve_url(&url_str)?;
+        let url = apply_params_to_url(&resolved_url, args)?;
         let opts = extract_options(args)?;
 
         execute_request(
@@ -769,6 +856,7 @@ impl RbHttpClient {
     }
 
     fn request(&self, args: &[Value]) -> Result<RbHttpResponse, MagnusError> {
+        self.ensure_open()?;
         let verb = Symbol::try_convert(args[0])?;
         let method = match verb.name()?.as_str() {
             "get" => HttpMethod::Get,
@@ -781,7 +869,8 @@ impl RbHttpClient {
         };
         
         let url_str = String::try_convert(args[1])?;
-        let url = apply_params_to_url(&url_str, &args[1..])?;
+        let resolved_url = self.resolve_url(&url_str)?;
+        let url = apply_params_to_url(&resolved_url, &args[1..])?;
         let opts = extract_options(&args[1..])?;
         
         execute_request(
@@ -826,6 +915,8 @@ impl Clone for RbHttpClient {
             auth_header: self.auth_header.clone(),
             accept_type: self.accept_type.clone(),
             encoding: self.encoding.clone(),
+            base_url: self.base_url.clone(),
+            closed: self.closed,
         }
     }
 }
@@ -970,6 +1061,10 @@ fn rb_request(args: &[Value]) -> Result<RbHttpResponse, MagnusError> {
     client.request(args)
 }
 
+fn rb_persistent(args: &[Value]) -> Result<RbHttpClient, MagnusError> {
+    RbHttpClient::new()?.persistent(args)
+}
+
 fn rb_headers(headers_hash: RHash) -> Result<RbHttpClient, MagnusError> {
     let client = RbHttpClient::new()?;
     Ok(client.headers(headers_hash))
@@ -1060,6 +1155,8 @@ fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
     client_class.define_method("patch", method!(RbHttpClient::patch, -1))?;
     client_class.define_method("request", method!(RbHttpClient::request, -1))?;
     client_class.define_method("headers", method!(RbHttpClient::headers, 1))?;
+    client_class.define_method("persistent", method!(RbHttpClient::persistent, -1))?;
+    client_class.define_method("close", method!(RbHttpClient::close, 0))?;
 
     http_module.define_module_function("get", function!(rb_get, -1))?;
     http_module.define_module_function("desktop", function!(rb_desktop, 0))?;
@@ -1070,6 +1167,7 @@ fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
     http_module.define_module_function("head", function!(rb_head, -1))?;
     http_module.define_method("patch", function!(rb_patch, -1))?;
     http_module.define_module_function("request", function!(rb_request, -1))?;
+    http_module.define_module_function("persistent", function!(rb_persistent, -1))?;
     http_module.define_module_function("headers", function!(rb_headers, 1))?;
     http_module.define_module_function("follow", function!(rb_follow, -1))?;
     http_module.define_module_function("timeout", function!(rb_timeout, 1))?;

@@ -143,6 +143,47 @@ class WreqTest < Minitest::Test
     assert_equal('test body', body['data'])
   end
 
+  def test_persistent_basic
+    client = HTTP.persistent('https://httpbin.org')
+    response = client.get('/get')
+    assert_equal(200, response.status)
+  end
+
+  def test_persistent_block_form
+    result = HTTP.persistent('https://httpbin.org') do |http|
+      http.get('/get')
+    end
+    assert_equal(200, result.status)
+  end
+
+  def test_persistent_relative_urls
+    client = HTTP.persistent('https://httpbin.org')
+    r1 = client.get('/get')
+    r2 = client.get('/ip')
+    assert_equal(200, r1.status)
+    assert_equal(200, r2.status)
+  end
+
+  def test_persistent_close
+    client = HTTP.persistent('https://httpbin.org')
+    client.close
+    assert_raises(RuntimeError) { client.get('/get') }
+  end
+
+  def test_persistent_timeout_option
+    client = HTTP.persistent('https://httpbin.org', timeout: 30)
+    response = client.get('/get')
+    assert_equal(200, response.status)
+  end
+
+  def test_persistent_multiple_requests
+    client = HTTP.persistent('https://httpbin.org')
+    5.times do
+      response = client.get('/get')
+      assert_equal(200, response.status)
+    end
+  end
+
   def test_post_json
     response = HTTP
                .headers(content_type: 'application/json')

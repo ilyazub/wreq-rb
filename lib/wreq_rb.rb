@@ -14,7 +14,7 @@ module Wreq
     class Response
       def parse
         ct = content_type
-        if ct && ct.include?('application/json')
+        if ct&.include?('application/json')
           JSON.parse(body)
         else
           body
@@ -41,6 +41,19 @@ module Wreq
 
     class << self
       alias through via
+
+      def persistent(host, options = {})
+        client = new
+        client = client.persistent(host, options)
+
+        return client unless block_given?
+
+        begin
+          yield client
+        ensure
+          client.close
+        end
+      end
     end
   end
 end

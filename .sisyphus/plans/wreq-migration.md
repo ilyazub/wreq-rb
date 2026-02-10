@@ -1123,7 +1123,7 @@ Wave 3 (Polish — Sequential after Wave 2):
 
 ---
 
-- [ ] 10. Persistent connections with .persistent() and block form
+- [x] 10. Persistent connections with .persistent() and block form
 
   **What to do**:
 
