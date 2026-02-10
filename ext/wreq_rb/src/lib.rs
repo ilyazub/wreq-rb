@@ -15,7 +15,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::runtime::Runtime;
 
-// Fast random implementation similar to wreq-util crate
+// Fast random implementation similar to rquest-util crate
 fn fast_random() -> u64 {
     thread_local! {
         static RNG: Cell<Wrapping<u64>> = Cell::new(Wrapping(seed()));
@@ -86,17 +86,26 @@ fn wreq_error_to_magnus_error(err: WreqError) -> MagnusError {
     )
 }
 
-fn get_runtime() -> Arc<Runtime> {
+fn get_runtime() -> Result<Arc<Runtime>, MagnusError> {
     thread_local! {
         static RUNTIME: RefCell<Option<Arc<Runtime>>> = RefCell::new(None);
     }
 
-    RUNTIME.with(|cell| {
+    RUNTIME.with(|cell| -> Result<Arc<Runtime>, MagnusError> {
         let mut runtime = cell.borrow_mut();
         if runtime.is_none() {
-            *runtime = Some(Arc::new(Runtime::new().expect("Failed to create runtime")));
+            let new_runtime = Runtime::new().map_err(|e| {
+                MagnusError::new(
+                    exception::runtime_error(),
+                    format!("Failed to create runtime: {}", e),
+                )
+            })?;
+            *runtime = Some(Arc::new(new_runtime));
         }
-        runtime.as_ref().unwrap().clone()
+        runtime
+            .as_ref()
+            .cloned()
+            .ok_or_else(|| MagnusError::new(exception::runtime_error(), "Runtime not initialized"))
     })
 }
 
@@ -119,6 +128,74 @@ fn extract_body(args: &[Value]) -> Result<Option<String>, MagnusError> {
     }
 }
 
+#[derive(Clone, Copy)]
+enum HttpMethod {
+    Get,
+    Post,
+    Put,
+    Delete,
+    Head,
+    Patch,
+}
+
+fn execute_request(
+    client: &wreq::Client,
+    method: HttpMethod,
+    url: &str,
+    headers: &HashMap<String, String>,
+    user_agent: &Option<String>,
+    redirect_policy: &Option<Policy>,
+    timeout_secs: u64,
+    body: Option<String>,
+) -> Result<RbHttpResponse, MagnusError> {
+    let runtime = get_runtime()?;
+
+    let mut request = match method {
+        HttpMethod::Get => client.get(url),
+        HttpMethod::Post => client.post(url),
+        HttpMethod::Put => client.put(url),
+        HttpMethod::Delete => client.delete(url),
+        HttpMethod::Head => client.head(url),
+        HttpMethod::Patch => client.patch(url),
+    };
+
+    for (key, value) in headers {
+        request = request.header(key, value);
+    }
+
+    if !headers.contains_key("Accept") && !headers.contains_key("accept") {
+        request = request.header("Accept", "*/*");
+    }
+
+    if let Some(ua) = user_agent {
+        request = request.header("User-Agent", ua);
+    }
+
+    if let Some(policy) = redirect_policy {
+        request = request.redirect(policy.clone());
+    }
+
+    if timeout_secs > 0 {
+        request = request.timeout(Duration::from_secs(timeout_secs));
+    }
+
+    if let Some(body_str) = body {
+        request = request.body(body_str);
+        if matches!(method, HttpMethod::Post | HttpMethod::Put | HttpMethod::Patch)
+            && !headers.contains_key("Content-Type")
+            && !headers.contains_key("content-type")
+        {
+            request = request.header("Content-Type", "text/plain");
+        }
+    }
+
+    let response = runtime
+        .block_on(request.send())
+        .map_err(wreq_error_to_magnus_error)?;
+
+    runtime.block_on(RbHttpResponse::new(response))
+}
+
 #[magnus::wrap(class = "Wreq::HTTP::Client")]
 struct ClientWrap(wreq::Client);
 
@@ -130,324 +207,222 @@ impl ClientWrap {
 
 impl Clone for ClientWrap {
     fn clone(&self) -> Self {
-        // This creates a new client with the same settings
-        ClientWrap(
-            wreq::Client::builder()
-                .emulation(get_random_emulation())
-                .build()
-                .expect("Failed to create client"),
-        )
+        ClientWrap(self.0.clone())
     }
 }
 
 #[magnus::wrap(class = "Wreq::HTTP::Client")]
 struct RbHttpClient {
     client: ClientWrap,
-    default_headers: HashMap<String, String>,
-    follow_redirects: bool,
+    headers: HashMap<String, String>,
+    user_agent: Option<String>,
+    redirect_policy: Option<Policy>,
+    timeout: u64,
     proxy: Option<String>,
-    timeout: Option<Duration>,
+    // Future http.rb feature scaffolding (Tasks 4-11)
+    cookies: Option<HashMap<String, String>>,
+    auth_header: Option<String>,
+    accept_type: Option<String>,
 }
 
 impl RbHttpClient {
-    fn new() -> Self {
-        Self {
-            client: ClientWrap(
-                wreq::Client::builder()
-                    .emulation(get_random_emulation())
-                    .build()
-                    .expect("Failed to create client"),
-            ),
-            default_headers: HashMap::new(),
-            follow_redirects: true,
+    fn new() -> Result<Self, MagnusError> {
+        let client = wreq::Client::builder()
+            .emulation(get_random_emulation())
+            .build()
+            .map_err(|e| {
+                MagnusError::new(
+                    exception::runtime_error(),
+                    format!("Failed to create client: {}", e),
+                )
+            })?;
+
+        Ok(Self {
+            client: ClientWrap(client),
+            headers: HashMap::new(),
+            user_agent: None,
+            redirect_policy: Some(Policy::limited(10)),
+            timeout: 0,
             proxy: None,
-            timeout: None,
-        }
+            cookies: None,
+            auth_header: None,
+            accept_type: None,
+        })
     }
 
-    fn new_desktop() -> Self {
-        Self {
-            client: ClientWrap(
-                wreq::Client::builder()
-                    .emulation(get_random_desktop_emulation())
-                    .build()
-                    .expect("Failed to create client"),
-            ),
-            default_headers: HashMap::new(),
-            follow_redirects: true,
+    fn new_desktop() -> Result<Self, MagnusError> {
+        let client = wreq::Client::builder()
+            .emulation(get_random_desktop_emulation())
+            .build()
+            .map_err(|e| {
+                MagnusError::new(
+                    exception::runtime_error(),
+                    format!("Failed to create client: {}", e),
+                )
+            })?;
+
+        Ok(Self {
+            client: ClientWrap(client),
+            headers: HashMap::new(),
+            user_agent: None,
+            redirect_policy: Some(Policy::limited(10)),
+            timeout: 0,
             proxy: None,
-            timeout: None,
-        }
+            cookies: None,
+            auth_header: None,
+            accept_type: None,
+        })
     }
 
-    fn new_mobile() -> Self {
-        Self {
-            client: ClientWrap(
-                wreq::Client::builder()
-                    .emulation(get_random_mobile_emulation())
-                    .build()
-                    .expect("Failed to create client"),
-            ),
-            default_headers: HashMap::new(),
-            follow_redirects: true,
+    fn new_mobile() -> Result<Self, MagnusError> {
+        let client = wreq::Client::builder()
+            .emulation(get_random_mobile_emulation())
+            .build()
+            .map_err(|e| {
+                MagnusError::new(
+                    exception::runtime_error(),
+                    format!("Failed to create client: {}", e),
+                )
+            })?;
+
+        Ok(Self {
+            client: ClientWrap(client),
+            headers: HashMap::new(),
+            user_agent: None,
+            redirect_policy: Some(Policy::limited(10)),
+            timeout: 0,
             proxy: None,
-            timeout: None,
-        }
+            cookies: None,
+            auth_header: None,
+            accept_type: None,
+        })
     }
 
     fn with_headers(&self, headers: HashMap<String, String>) -> Self {
         let mut new_client = self.clone();
-        new_client.default_headers.clear();
+        new_client.headers.clear();
 
         for (name, value) in headers {
-            new_client
-                .default_headers
-                .insert(name.to_lowercase(), value);
+            new_client.headers.insert(name.to_lowercase(), value);
         }
         new_client
     }
 
-    fn with_proxy(&self, proxy: String) -> Self {
+    fn with_proxy(&self, proxy: String) -> Result<Self, MagnusError> {
         let mut new_client = self.clone();
         new_client.proxy = Some(proxy.clone());
 
-        new_client.client = ClientWrap(
-                wreq::Client::builder()
-                .emulation(get_random_emulation())
-                .proxy(proxy)
-                .build()
-                .expect("Failed to create client with proxy"),
-        );
+        let client = wreq::Client::builder()
+            .emulation(get_random_emulation())
+            .proxy(proxy)
+            .build()
+            .map_err(|e| {
+                MagnusError::new(
+                    exception::runtime_error(),
+                    format!("Failed to create client with proxy: {}", e),
+                )
+            })?;
 
-        new_client
+        new_client.client = ClientWrap(client);
+
+        Ok(new_client)
     }
 
     fn follow(&self, follow: bool) -> Self {
         let mut new_client = self.clone();
-        new_client.follow_redirects = follow;
+        new_client.redirect_policy = if follow {
+            Some(Policy::limited(10))
+        } else {
+            Some(Policy::none())
+        };
         new_client
     }
 
     fn get(&self, url: String) -> Result<RbHttpResponse, MagnusError> {
-        let rt = get_runtime();
-        let mut req = self.client.inner().get(&url);
-
-        for (name, value) in &self.default_headers {
-            req = req.header(name, value);
-        }
-
-        if !self.default_headers.contains_key("accept") {
-            req = req.header("Accept", "application/json");
-        }
-
-        if let Some(user_agent) = self.default_headers.get("user-agent") {
-            req = req.header("User-Agent", user_agent);
-        }
-
-        if self.follow_redirects {
-            req = req.redirect(Policy::limited(10));
-        } else {
-            req = req.redirect(Policy::none());
-        }
-
-        if let Some(timeout) = self.timeout {
-            req = req.timeout(timeout);
-        }
-
-        match rt.block_on(req.send()) {
-            Ok(response) => Ok(RbHttpResponse::new(response)),
-            Err(e) => Err(wreq_error_to_magnus_error(e)),
-        }
+        execute_request(
+            self.client.inner(),
+            HttpMethod::Get,
+            &url,
+            &self.headers,
+            &self.user_agent,
+            &self.redirect_policy,
+            self.timeout,
+            None,
+        )
     }
 
     fn post(&self, args: &[Value]) -> Result<RbHttpResponse, MagnusError> {
         let url = String::try_convert(args[0])?;
         let body = extract_body(args)?;
 
-        let rt = get_runtime();
-        let mut req = self.client.inner().post(&url);
-
-        for (name, value) in &self.default_headers {
-            req = req.header(name, value);
-        }
-
-        if !self.default_headers.contains_key("accept") {
-            req = req.header("Accept", "application/json");
-        }
-        if !self.default_headers.contains_key("content-type") {
-            req = req.header("Content-Type", "application/json");
-        }
-
-        if let Some(user_agent) = self.default_headers.get("user-agent") {
-            req = req.header("User-Agent", user_agent);
-        }
-
-        if self.follow_redirects {
-            req = req.redirect(Policy::limited(10));
-        } else {
-            req = req.redirect(Policy::none());
-        }
-
-        if let Some(timeout) = self.timeout {
-            req = req.timeout(timeout);
-        }
-
-        if let Some(body) = body {
-            req = req.body(body);
-        }
-
-        match rt.block_on(req.send()) {
-            Ok(response) => Ok(RbHttpResponse::new(response)),
-            Err(e) => Err(wreq_error_to_magnus_error(e)),
-        }
+        execute_request(
+            self.client.inner(),
+            HttpMethod::Post,
+            &url,
+            &self.headers,
+            &self.user_agent,
+            &self.redirect_policy,
+            self.timeout,
+            body,
+        )
     }
 
     fn put(&self, args: &[Value]) -> Result<RbHttpResponse, MagnusError> {
         let url = String::try_convert(args[0])?;
         let body = extract_body(args)?;
 
-        let rt = get_runtime();
-        let mut req = self.client.inner().put(&url);
-
-        for (name, value) in &self.default_headers {
-            req = req.header(name, value);
-        }
-
-        if !self.default_headers.contains_key("accept") {
-            req = req.header("Accept", "application/json");
-        }
-        if !self.default_headers.contains_key("content-type") {
-            req = req.header("Content-Type", "application/json");
-        }
-
-        if let Some(user_agent) = self.default_headers.get("user-agent") {
-            req = req.header("User-Agent", user_agent);
-        }
-
-        if self.follow_redirects {
-            req = req.redirect(Policy::limited(10));
-        } else {
-            req = req.redirect(Policy::none());
-        }
-
-        if let Some(timeout) = self.timeout {
-            req = req.timeout(timeout);
-        }
-
-        if let Some(body) = body {
-            req = req.body(body);
-        }
-
-        match rt.block_on(req.send()) {
-            Ok(response) => Ok(RbHttpResponse::new(response)),
-            Err(e) => Err(wreq_error_to_magnus_error(e)),
-        }
+        execute_request(
+            self.client.inner(),
+            HttpMethod::Put,
+            &url,
+            &self.headers,
+            &self.user_agent,
+            &self.redirect_policy,
+            self.timeout,
+            body,
+        )
     }
 
     fn delete(&self, url: String) -> Result<RbHttpResponse, MagnusError> {
-        let rt = get_runtime();
-        let mut req = self.client.inner().delete(&url);
-
-        for (name, value) in &self.default_headers {
-            req = req.header(name, value);
-        }
-
-        if !self.default_headers.contains_key("accept") {
-            req = req.header("Accept", "application/json");
-        }
-
-        if let Some(user_agent) = self.default_headers.get("user-agent") {
-            req = req.header("User-Agent", user_agent);
-        }
-
-        if self.follow_redirects {
-            req = req.redirect(Policy::limited(10));
-        } else {
-            req = req.redirect(Policy::none());
-        }
-
-        if let Some(timeout) = self.timeout {
-            req = req.timeout(timeout);
-        }
-
-        match rt.block_on(req.send()) {
-            Ok(response) => Ok(RbHttpResponse::new(response)),
-            Err(e) => Err(wreq_error_to_magnus_error(e)),
-        }
+        execute_request(
+            self.client.inner(),
+            HttpMethod::Delete,
+            &url,
+            &self.headers,
+            &self.user_agent,
+            &self.redirect_policy,
+            self.timeout,
+            None,
+        )
     }
 
     fn head(&self, url: String) -> Result<RbHttpResponse, MagnusError> {
-        let rt = get_runtime();
-        let mut req = self.client.inner().head(&url);
-
-        for (name, value) in &self.default_headers {
-            req = req.header(name, value);
-        }
-
-        if !self.default_headers.contains_key("accept") {
-            req = req.header("Accept", "application/json");
-        }
-
-        if let Some(user_agent) = self.default_headers.get("user-agent") {
-            req = req.header("User-Agent", user_agent);
-        }
-
-        if self.follow_redirects {
-            req = req.redirect(Policy::limited(10));
-        } else {
-            req = req.redirect(Policy::none());
-        }
-
-        if let Some(timeout) = self.timeout {
-            req = req.timeout(timeout);
-        }
-
-        match rt.block_on(req.send()) {
-            Ok(response) => Ok(RbHttpResponse::new(response)),
-            Err(e) => Err(wreq_error_to_magnus_error(e)),
-        }
+        execute_request(
+            self.client.inner(),
+            HttpMethod::Head,
+            &url,
+            &self.headers,
+            &self.user_agent,
+            &self.redirect_policy,
+            self.timeout,
+            None,
+        )
     }
 
     fn patch(&self, args: &[Value]) -> Result<RbHttpResponse, MagnusError> {
         let url = String::try_convert(args[0])?;
         let body = extract_body(args)?;
 
-        let rt = get_runtime();
-        let mut req = self.client.inner().patch(&url);
-
-        for (name, value) in &self.default_headers {
-            req = req.header(name, value);
-        }
-
-        if !self.default_headers.contains_key("accept") {
-            req = req.header("Accept", "application/json");
-        }
-        if !self.default_headers.contains_key("content-type") {
-            req = req.header("Content-Type", "application/json");
-        }
-
-        if let Some(user_agent) = self.default_headers.get("user-agent") {
-            req = req.header("User-Agent", user_agent);
-        }
-
-        if self.follow_redirects {
-            req = req.redirect(Policy::limited(10));
-        } else {
-            req = req.redirect(Policy::none());
-        }
-
-        if let Some(timeout) = self.timeout {
-            req = req.timeout(timeout);
-        }
-
-        if let Some(body) = body {
-            req = req.body(body);
-        }
-
-        match rt.block_on(req.send()) {
-            Ok(response) => Ok(RbHttpResponse::new(response)),
-            Err(e) => Err(wreq_error_to_magnus_error(e)),
-        }
+        execute_request(
+            self.client.inner(),
+            HttpMethod::Patch,
+            &url,
+            &self.headers,
+            &self.user_agent,
+            &self.redirect_policy,
+            self.timeout,
+            body,
+        )
     }
 
     fn headers(&self, headers_hash: RHash) -> Self {
@@ -470,10 +445,14 @@ impl Clone for RbHttpClient {
     fn clone(&self) -> Self {
         Self {
             client: self.client.clone(),
-            default_headers: self.default_headers.clone(),
-            follow_redirects: self.follow_redirects,
-            proxy: self.proxy.clone(),
+            headers: self.headers.clone(),
+            user_agent: self.user_agent.clone(),
+            redirect_policy: self.redirect_policy.clone(),
             timeout: self.timeout,
+            proxy: self.proxy.clone(),
+            cookies: self.cookies.clone(),
+            auth_header: self.auth_header.clone(),
+            accept_type: self.accept_type.clone(),
         }
     }
 }
@@ -491,9 +470,7 @@ struct RbHttpResponse {
 }
 
 impl RbHttpResponse {
-    fn new(response: WreqResponse) -> Self {
-        let rt = get_runtime();
-
+    async fn new(response: WreqResponse) -> Result<Self, MagnusError> {
         let status = response.status().as_u16();
         let url = response.url().to_string();
 
@@ -504,21 +481,22 @@ impl RbHttpResponse {
             }
         }
 
-        let body = rt.block_on(async {
-            match response.text().await {
-                Ok(text) => Some(text),
-                Err(_) => None,
+        let body = match response.text().await {
+            Ok(text) => text,
+            Err(e) => {
+                eprintln!("Warning: Failed to read response body: {}", e);
+                String::new()
             }
-        });
+        };
 
-        Self {
+        Ok(Self {
             data: Arc::new(ResponseData {
                 status,
                 headers,
-                body,
+                body: Some(body),
                 url,
             }),
-        }
+        })
     }
 
     fn status(&self) -> u16 {
@@ -577,54 +555,54 @@ impl RbHttpResponse {
 }
 
 fn rb_get(url: String) -> Result<RbHttpResponse, MagnusError> {
-    let client = RbHttpClient::new();
+    let client = RbHttpClient::new()?;
     client.get(url)
 }
 
-fn rb_desktop() -> RbHttpClient {
+fn rb_desktop() -> Result<RbHttpClient, MagnusError> {
     RbHttpClient::new_desktop()
 }
 
-fn rb_mobile() -> RbHttpClient {
+fn rb_mobile() -> Result<RbHttpClient, MagnusError> {
     RbHttpClient::new_mobile()
 }
 
 fn rb_post(args: &[Value]) -> Result<RbHttpResponse, MagnusError> {
-    let client = RbHttpClient::new();
+    let client = RbHttpClient::new()?;
     client.post(args)
 }
 
 fn rb_put(args: &[Value]) -> Result<RbHttpResponse, MagnusError> {
-    let client = RbHttpClient::new();
+    let client = RbHttpClient::new()?;
     client.put(args)
 }
 
 fn rb_delete(url: String) -> Result<RbHttpResponse, MagnusError> {
-    let client = RbHttpClient::new();
+    let client = RbHttpClient::new()?;
     client.delete(url)
 }
 
 fn rb_head(url: String) -> Result<RbHttpResponse, MagnusError> {
-    let client = RbHttpClient::new();
+    let client = RbHttpClient::new()?;
     client.head(url)
 }
 
 fn rb_patch(args: &[Value]) -> Result<RbHttpResponse, MagnusError> {
-    let client = RbHttpClient::new();
+    let client = RbHttpClient::new()?;
     client.patch(args)
 }
 
-fn rb_headers(headers_hash: RHash) -> RbHttpClient {
-    let client = RbHttpClient::new();
-    client.headers(headers_hash)
+fn rb_headers(headers_hash: RHash) -> Result<RbHttpClient, MagnusError> {
+    let client = RbHttpClient::new()?;
+    Ok(client.headers(headers_hash))
 }
 
-fn rb_follow(follow: bool) -> RbHttpClient {
-    RbHttpClient::new().follow(follow)
+fn rb_follow(follow: bool) -> Result<RbHttpClient, MagnusError> {
+    Ok(RbHttpClient::new()?.follow(follow))
 }
 
-fn rb_proxy(proxy: String) -> RbHttpClient {
-    RbHttpClient::new().with_proxy(proxy)
+fn rb_proxy(proxy: String) -> Result<RbHttpClient, MagnusError> {
+    RbHttpClient::new()?.with_proxy(proxy)
 }
 
 #[magnus::init]
@@ -707,6 +685,7 @@ mod tests {
         init_ruby();
 
         let response = RbHttpClient::new()
+            .unwrap()
             .get("https://httpbin.org/get".to_string())
             .unwrap();
         assert_eq!(response.status(), 200);
@@ -745,6 +724,7 @@ mod tests {
         init_ruby();
 
         let response = RbHttpClient::new()
+            .unwrap()
             .delete("https://httpbin.org/delete".to_string())
             .unwrap();
         assert_eq!(response.status(), 200);
@@ -756,6 +736,7 @@ mod tests {
         init_ruby();
 
         let response = RbHttpClient::new()
+            .unwrap()
             .head("https://httpbin.org/get".to_string())
             .unwrap();
         assert_eq!(response.status(), 200);
@@ -775,7 +756,7 @@ mod tests {
     fn test_http_response() {
         init_ruby();
 
-        let client = RbHttpClient::new();
+        let client = RbHttpClient::new().unwrap();
         let response = client.get("https://httpbin.org/get".to_string()).unwrap();
 
         assert_eq!(response.status(), 200);
