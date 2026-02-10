@@ -210,7 +210,7 @@ Wave 3 (Polish — Sequential after Wave 2):
 
 ## TODOs
 
-- [ ] 1. Rename all files and references: rquest → wreq
+- [x] 1. Rename all files and references: rquest → wreq
 
   **What to do**:
   - Rename directory `ext/rquest_rb/` → `ext/wreq_rb/`
@@ -326,7 +326,7 @@ Wave 3 (Polish — Sequential after Wave 2):
 
 ---
 
-- [ ] 2. Update Cargo dependencies + fix Rust imports to compile
+- [x] 2. Update Cargo dependencies + fix Rust imports to compile
 
   **What to do**:
   - In `ext/wreq_rb/Cargo.toml`:
@@ -427,7 +427,7 @@ Wave 3 (Polish — Sequential after Wave 2):
 
 ---
 
-- [ ] 3. Refactor Rust core — DRY + safety fixes
+- [x] 3. Refactor Rust core — DRY + safety fixes
 
   **What to do**:
 
@@ -1045,7 +1045,7 @@ Wave 3 (Polish — Sequential after Wave 2):
 
 ---
 
-- [ ] 9. Chainable .via() (http.rb-style proxy)
+- [x] 9. Chainable .via() (http.rb-style proxy)
 
   **What to do**:
 
