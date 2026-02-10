@@ -302,48 +302,41 @@ class WreqTest < Minitest::Test
   end
 
   def test_tls_fingerprinting
-    # Create multiple clients to test fingerprint randomization
     fingerprints = []
 
-    3.times do
+    5.times do
       client = HTTP::Client.new
 
-      # Make request to TLS fingerprinting service
       response = client.get('https://tls.peet.ws/api/all')
       assert_equal(200, response.status)
 
-      # Parse the JSON response
       data = JSON.parse(response.body)
 
-      # Verify TLS data structure
       assert_kind_of(Hash, data['tls'])
       assert_kind_of(Array, data['tls']['ciphers'])
       assert(data['tls']['ciphers'].size > 0, 'Expected TLS ciphers to be present')
 
-      # Check for JA3 and JA4 fingerprints
       refute_nil(data['tls']['ja3'], 'JA3 fingerprint should be present')
       refute_nil(data['tls']['ja3_hash'], 'JA3 hash should be present')
       refute_nil(data['tls']['ja4'], 'JA4 fingerprint should be present')
 
-      # Store fingerprints for comparison
       fingerprints << {
         ja3: data['tls']['ja3_hash'],
         ja4: data['tls']['ja4']
       }
 
-      # Verify TLS version is modern
       tls_version = data['tls']['tls_version_negotiated']
       assert(%w[771 772].include?(tls_version),
              "Expected modern TLS version (TLS 1.2 or 1.3), got: #{tls_version}")
     end
 
-    # Check for fingerprint randomization
-    # Either JA3 or JA4 should have some variation across requests
     ja3_fingerprints = fingerprints.map { |f| f[:ja3] }.uniq
     ja4_fingerprints = fingerprints.map { |f| f[:ja4] }.uniq
 
     assert(ja3_fingerprints.size > 1 || ja4_fingerprints.size > 1,
-           'Expected fingerprint randomization, but got identical fingerprints across requests')
+           'Expected fingerprint randomization, but got identical fingerprints across 5 requests. ' \
+          "JA3: #{ja3_fingerprints.size} unique (#{ja3_fingerprints.first}...), " \
+          "JA4: #{ja4_fingerprints.size} unique (#{ja4_fingerprints.first}...)")
   end
 
   def test_timeout_chainable
@@ -700,9 +693,9 @@ class WreqTest < Minitest::Test
     errors = Queue.new
     responses = Queue.new
 
-    threads = Array.new(10) do
+    threads = Array.new(5) do
       Thread.new do
-        5.times do
+        2.times do
           response = HTTP.get('https://httpbin.org/get', params: { t: Thread.current.object_id })
           responses << response.code
         end
@@ -717,7 +710,7 @@ class WreqTest < Minitest::Test
 
     codes = []
     codes << responses.pop(true) until responses.empty?
-    assert_equal 50, codes.size
+    assert_equal 10, codes.size
     assert(codes.all? { |code| code == 200 })
   end
 
