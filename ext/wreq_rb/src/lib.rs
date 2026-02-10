@@ -7,7 +7,7 @@ use wreq::header::{HeaderMap, HeaderName, HeaderValue};
 use wreq::redirect::Policy;
 use wreq::{Error as WreqError, Response as WreqResponse};
 use wreq_util::Emulation as WreqEmulation;
-use std::cell::{Cell, RefCell};
+use std::cell::Cell;
 use std::collections::HashMap;
 use std::collections::hash_map::RandomState;
 use std::hash::{BuildHasher, Hasher};
@@ -16,6 +16,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::runtime::Runtime;
 use url::Url;
+use lazy_static::lazy_static;
 
 // Fast random implementation similar to wreq-util crate
 fn fast_random() -> u64 {
@@ -102,27 +103,14 @@ fn normalize_header_name(name: &str) -> String {
         .join("-")
 }
 
-fn get_runtime() -> Result<Arc<Runtime>, MagnusError> {
-    thread_local! {
-        static RUNTIME: RefCell<Option<Arc<Runtime>>> = RefCell::new(None);
-    }
+lazy_static! {
+    static ref RUNTIME: Arc<Runtime> = Arc::new(
+        Runtime::new().expect("Failed to create tokio runtime")
+    );
+}
 
-    RUNTIME.with(|cell| -> Result<Arc<Runtime>, MagnusError> {
-        let mut runtime = cell.borrow_mut();
-        if runtime.is_none() {
-            let new_runtime = Runtime::new().map_err(|e| {
-                MagnusError::new(
-                    exception::runtime_error(),
-                    format!("Failed to create runtime: {}", e),
-                )
-            })?;
-            *runtime = Some(Arc::new(new_runtime));
-        }
-        runtime
-            .as_ref()
-            .cloned()
-            .ok_or_else(|| MagnusError::new(exception::runtime_error(), "Runtime not initialized"))
-    })
+fn get_runtime() -> Result<Arc<Runtime>, MagnusError> {
+    Ok(Arc::clone(&RUNTIME))
 }
 
 struct RequestOptions {
@@ -275,36 +263,84 @@ fn execute_request(
         HttpMethod::Patch => client.patch(url),
     };
 
-    let mut header_map = HeaderMap::new();
+    // Pre-allocate HeaderMap with capacity (headers + 3 defaults: accept, user-agent, content-type)
+    let mut header_map = HeaderMap::with_capacity(headers.len() + 3);
 
+    // Track which special headers were set by the user
+    let mut has_accept = false;
+    let mut has_user_agent = false;
+    let mut has_content_type = false;
+
+    // Process user-provided headers
     for (key, value) in headers {
-        if let (Ok(name), Ok(val)) = (
-            HeaderName::from_bytes(key.as_bytes()),
-            HeaderValue::from_str(value),
-        ) {
-            header_map.insert(name, val);
+        let key_lower = key.to_lowercase();
+        
+        // Check if this is a special header we handle separately
+        match key_lower.as_str() {
+            "accept" => {
+                has_accept = true;
+                if let (Ok(name), Ok(val)) = (
+                    HeaderName::from_bytes(key.as_bytes()),
+                    HeaderValue::from_str(value),
+                ) {
+                    header_map.insert(name, val);
+                }
+            }
+            "user-agent" => {
+                has_user_agent = true;
+                if let (Ok(name), Ok(val)) = (
+                    HeaderName::from_bytes(key.as_bytes()),
+                    HeaderValue::from_str(value),
+                ) {
+                    header_map.insert(name, val);
+                }
+            }
+            "content-type" => {
+                has_content_type = true;
+                if let (Ok(name), Ok(val)) = (
+                    HeaderName::from_bytes(key.as_bytes()),
+                    HeaderValue::from_str(value),
+                ) {
+                    header_map.insert(name, val);
+                }
+            }
+            _ => {
+                if let (Ok(name), Ok(val)) = (
+                    HeaderName::from_bytes(key.as_bytes()),
+                    HeaderValue::from_str(value),
+                ) {
+                    header_map.insert(name, val);
+                }
+            }
         }
     }
 
-    if !header_map.contains_key("accept") {
+    // Set accept header if not provided by user
+    if !has_accept {
         header_map.insert(
             HeaderName::from_static("accept"),
             HeaderValue::from_static("*/*"),
         );
     }
 
+    // Set user-agent header if provided and not already set
     if let Some(ua) = user_agent {
-        if let Ok(val) = HeaderValue::from_str(ua) {
-            header_map.insert(HeaderName::from_static("user-agent"), val);
+        if !has_user_agent {
+            if let Ok(val) = HeaderValue::from_str(ua) {
+                header_map.insert(HeaderName::from_static("user-agent"), val);
+            }
         }
     }
 
+    // Set content-type header if provided and not already set
     if let Some(ct) = &content_type {
-        if let Ok(val) = HeaderValue::from_str(ct) {
-            header_map.insert(HeaderName::from_static("content-type"), val);
+        if !has_content_type {
+            if let Ok(val) = HeaderValue::from_str(ct) {
+                header_map.insert(HeaderName::from_static("content-type"), val);
+            }
         }
     } else if matches!(method, HttpMethod::Post | HttpMethod::Put | HttpMethod::Patch)
-        && !header_map.contains_key("content-type")
+        && !has_content_type
     {
         header_map.insert(
             HeaderName::from_static("content-type"),
