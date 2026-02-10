@@ -571,7 +571,7 @@ Wave 3 (Polish — Sequential after Wave 2):
 
 ---
 
-- [ ] 4. Options hash support (:body, :json, :form, :params) + generic .request()
+- [x] 4. Options hash support (:body, :json, :form, :params) + generic .request()
 
   **What to do**:
 
@@ -1223,7 +1223,7 @@ Wave 3 (Polish — Sequential after Wave 2):
 
 ---
 
-- [ ] 11. .follow() with options hash (max_hops)
+- [x] 11. .follow() with options hash (max_hops)
 
   **What to do**:
 

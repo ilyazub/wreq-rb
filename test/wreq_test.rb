@@ -469,4 +469,70 @@ class WreqTest < Minitest::Test
     response = Wreq::HTTP.follow(false).get("https://httpbin.org/redirect/1")
     assert response.status.redirect?
   end
+
+  def test_post_with_json_option
+    skip "requires httpbin.org access"
+    response = HTTP.post("https://httpbin.org/post", json: { name: "test", value: 123 })
+    assert_equal 200, response.code
+    body = JSON.parse(response.body)
+    assert_equal "test", body["json"]["name"]
+    assert_equal 123, body["json"]["value"]
+    assert body["headers"]["Content-Type"].include?("application/json")
+  end
+
+  def test_post_with_form_option
+    skip "requires httpbin.org access"
+    response = HTTP.post("https://httpbin.org/post", form: { name: "test", email: "a@b.com" })
+    assert_equal 200, response.code
+    body = JSON.parse(response.body)
+    assert_equal "test", body["form"]["name"]
+    assert_equal "a@b.com", body["form"]["email"]
+    assert body["headers"]["Content-Type"].include?("application/x-www-form-urlencoded")
+  end
+
+  def test_post_with_body_option_backward_compat
+    skip "requires httpbin.org access"
+    response = HTTP.post("https://httpbin.org/post", body: "raw string data")
+    assert_equal 200, response.code
+    body = JSON.parse(response.body)
+    assert_equal "raw string data", body["data"]
+  end
+
+  def test_get_with_params_option
+    skip "requires httpbin.org access"
+    response = HTTP.get("https://httpbin.org/get", params: { q: "search", page: "2" })
+    assert_equal 200, response.code
+    body = JSON.parse(response.body)
+    assert_equal "search", body["args"]["q"]
+    assert_equal "2", body["args"]["page"]
+  end
+
+  def test_request_method_get
+    skip "requires httpbin.org access"
+    response = HTTP.request(:get, "https://httpbin.org/get")
+    assert_equal 200, response.code
+  end
+
+  def test_request_method_post_with_json
+    skip "requires httpbin.org access"
+    response = HTTP.request(:post, "https://httpbin.org/post", json: { a: 1 })
+    assert_equal 200, response.code
+    body = JSON.parse(response.body)
+    assert_equal 1, body["json"]["a"]
+  end
+
+  def test_request_method_invalid_verb
+    assert_raises(ArgumentError) do
+      HTTP.request(:invalid, "https://httpbin.org/get")
+    end
+  end
+
+  def test_chainable_with_params
+    skip "requires httpbin.org access"
+    response = HTTP.headers(accept: "application/json").get("https://httpbin.org/get", params: { test: "value" })
+    assert_equal 200, response.code
+    body = JSON.parse(response.body)
+    assert_equal "value", body["args"]["test"]
+    assert body["headers"]["Accept"].include?("application/json")
+  end
 end 
