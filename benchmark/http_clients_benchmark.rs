@@ -16,9 +16,9 @@ async fn reqwest_async() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-async fn rquest_async() -> Result<(), Box<dyn Error>> {
-    let client = rquest::Client::builder()
-        .emulation(rquest_util::Emulation::Chrome134)
+async fn wreq_async() -> Result<(), Box<dyn Error>> {
+    let client = wreq::Client::builder()
+        .emulation(wreq_util::Emulation::Chrome134)
         .build()?;
     let _resp = client.get(URL).send().await?;
     Ok(())
@@ -41,11 +41,11 @@ fn bench_http_clients(c: &mut Criterion) {
         });
     });
 
-    group.bench_function(BenchmarkId::new("rquest", "async"), |b| {
+    group.bench_function(BenchmarkId::new("wreq", "async"), |b| {
         b.iter(|| {
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
-                rquest_async().await.unwrap();
+                wreq_async().await.unwrap();
             });
         });
     });

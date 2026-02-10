@@ -41,10 +41,10 @@ class BenchmarkChartGenerator
       commits: data.map { |row| row['commit'][0..7] }, # Short commit hash
       curb_time: data.map { |row| row['curb_time'].to_f },
       http_time: data.map { |row| row['http_time'].to_f },
-      rquest_time: data.map { |row| row['rquest_time'].to_f },
+      wreq_time: data.map { |row| row['wreq_time'].to_f },
       curb_rps: data.map { |row| row['curb_req_per_sec'].to_f },
       http_rps: data.map { |row| row['http_req_per_sec'].to_f },
-      rquest_rps: data.map { |row| row['rquest_req_per_sec'].to_f }
+      wreq_rps: data.map { |row| row['wreq_req_per_sec'].to_f }
     }
   end
 
@@ -72,7 +72,7 @@ class BenchmarkChartGenerator
         <TR><TD COLSPAN="2" ALIGN="CENTER">#{label}</TD></TR>
         <TR><TD ALIGN="RIGHT">Curb:</TD><TD BGCOLOR="#FF9999" WIDTH="#{(metrics[:curb_time][index] * 50).to_i}"> #{metrics[:curb_time][index].round(2)}s</TD></TR>
         <TR><TD ALIGN="RIGHT">HTTP.rb:</TD><TD BGCOLOR="#99CCFF" WIDTH="#{(metrics[:http_time][index] * 50).to_i}"> #{metrics[:http_time][index].round(2)}s</TD></TR>
-        <TR><TD ALIGN="RIGHT">Rquest-rb:</TD><TD BGCOLOR="#99FF99" WIDTH="#{(metrics[:rquest_time][index] * 50).to_i}"> #{metrics[:rquest_time][index].round(2)}s</TD></TR>
+        <TR><TD ALIGN="RIGHT">Wreq-rb:</TD><TD BGCOLOR="#99FF99" WIDTH="#{(metrics[:wreq_time][index] * 50).to_i}"> #{metrics[:wreq_time][index].round(2)}s</TD></TR>
       </TABLE>
     HTML
     
@@ -81,7 +81,7 @@ class BenchmarkChartGenerator
 
   def generate_rps_chart(data)
     metrics = extract_metrics(data)
-    max_rps = [metrics[:curb_rps].max, metrics[:http_rps].max, metrics[:rquest_rps].max].max
+    max_rps = [metrics[:curb_rps].max, metrics[:http_rps].max, metrics[:wreq_rps].max].max
     scale_factor = 200.0 / max_rps
 
     GraphViz.new(:G, type: :digraph) do |g|
@@ -105,7 +105,7 @@ class BenchmarkChartGenerator
         <TR><TD COLSPAN="2" ALIGN="CENTER">#{label}</TD></TR>
         <TR><TD ALIGN="RIGHT">Curb:</TD><TD BGCOLOR="#FF9999" WIDTH="#{(metrics[:curb_rps][index] * scale_factor).to_i}"> #{metrics[:curb_rps][index].round(2)}</TD></TR>
         <TR><TD ALIGN="RIGHT">HTTP.rb:</TD><TD BGCOLOR="#99CCFF" WIDTH="#{(metrics[:http_rps][index] * scale_factor).to_i}"> #{metrics[:http_rps][index].round(2)}</TD></TR>
-        <TR><TD ALIGN="RIGHT">Rquest-rb:</TD><TD BGCOLOR="#99FF99" WIDTH="#{(metrics[:rquest_rps][index] * scale_factor).to_i}"> #{metrics[:rquest_rps][index].round(2)}</TD></TR>
+        <TR><TD ALIGN="RIGHT">Wreq-rb:</TD><TD BGCOLOR="#99FF99" WIDTH="#{(metrics[:wreq_rps][index] * scale_factor).to_i}"> #{metrics[:wreq_rps][index].round(2)}</TD></TR>
       </TABLE>
     HTML
     
@@ -134,7 +134,7 @@ class BenchmarkChartGenerator
         <TR><TD COLSPAN="2" ALIGN="CENTER"><B>Legend</B></TD></TR>
         <TR><TD BGCOLOR="#FF9999" WIDTH="20"></TD><TD>Curb</TD></TR>
         <TR><TD BGCOLOR="#99CCFF" WIDTH="20"></TD><TD>HTTP.rb</TD></TR>
-        <TR><TD BGCOLOR="#99FF99" WIDTH="20"></TD><TD>Rquest-rb</TD></TR>
+        <TR><TD BGCOLOR="#99FF99" WIDTH="20"></TD><TD>Wreq-rb</TD></TR>
       </TABLE>
     HTML
     graph.add_nodes("legend", label: legend_html)

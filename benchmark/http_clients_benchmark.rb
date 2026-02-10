@@ -5,7 +5,7 @@ require "curb"
 require "typhoeus"
 require "httpx"
 require "http"
-require "rquest_rb"
+require "wreq_rb"
 
 URL = "https://serpapi.com/robots.txt"
 
@@ -20,8 +20,8 @@ Benchmark.ips do |x|
     HTTP.get(URL).status
   end
 
-  x.report("rquest-rb") do
-    Rquest::HTTP.get(URL).code
+  x.report("wreq-rb") do
+    Wreq::HTTP.get(URL).code
   end
   
   x.report("typhoeus") do

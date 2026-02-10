@@ -1,6 +1,6 @@
-require_relative "rquest_rb/version"
+require_relative "wreq_rb/version"
 
-module Rquest
+module Wreq
   module HTTP
     # Methods are defined by the native extension
   end
@@ -9,7 +9,7 @@ end
 # Tries to require the extension for the given Ruby version first
 begin
   RUBY_VERSION =~ /(\d+\.\d+)/
-  require "rquest/#{Regexp.last_match(1)}/rquest_rb"
+  require "wreq/#{Regexp.last_match(1)}/wreq_rb"
 rescue LoadError
-  require "rquest/rquest_rb"
+  require "wreq/wreq_rb"
 end 

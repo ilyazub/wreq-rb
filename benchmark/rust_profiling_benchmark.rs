@@ -1,5 +1,5 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
-use rquest::Client;
+use wreq::Client;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::Mutex;

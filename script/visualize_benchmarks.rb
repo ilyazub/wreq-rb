@@ -54,23 +54,23 @@ ruby_versions = data.map { |row| row['ruby_version'] || 'unknown' }
 if options[:metric] == 'time'
   curb_vals = data.map { |row| row['curb_time'].to_f }
   http_vals = data.map { |row| row['http_time'].to_f }
-  rquest_vals = data.map { |row| row['rquest_time'].to_f }
+  wreq_vals = data.map { |row| row['wreq_time'].to_f }
   label = 'Time (seconds)'
 else
   curb_vals = data.map { |row| row['curb_req_per_sec'].to_f }
   http_vals = data.map { |row| row['http_req_per_sec'].to_f }
-  rquest_vals = data.map { |row| row['rquest_req_per_sec'].to_f }
+  wreq_vals = data.map { |row| row['wreq_req_per_sec'].to_f }
   label = 'Requests per second'
 end
 
 # Find max value for scaling in ASCII chart
-max_val = [curb_vals.max, http_vals.max, rquest_vals.max].max
+max_val = [curb_vals.max, http_vals.max, wreq_vals.max].max
 chart_width = 60
 
 # Display table
 puts "\nBenchmark History (#{label})"
 puts "-" * 90
-puts "%-10s %-8s %-6s %-12s %-12s %-12s" % ['Date', 'Commit', 'Ruby', 'Curb', 'HTTP.rb', 'Rquest-rb']
+puts "%-10s %-8s %-6s %-12s %-12s %-12s" % ['Date', 'Commit', 'Ruby', 'Curb', 'HTTP.rb', 'Wreq-rb']
 puts "-" * 90
 
 dates.each_with_index do |date, i|
@@ -80,7 +80,7 @@ dates.each_with_index do |date, i|
     ruby_versions[i],
     curb_vals[i], 
     http_vals[i], 
-    rquest_vals[i]
+    wreq_vals[i]
   ]
 end
 
@@ -100,8 +100,8 @@ http_vals.each_with_index do |val, i|
   puts "#{commits[i]} [Ruby #{ruby_versions[i]}]: #{'#' * bar_length} #{val.round(2)}"
 end
 
-puts "\nRquest-rb:"
-rquest_vals.each_with_index do |val, i|
+puts "\nWreq-rb:"
+wreq_vals.each_with_index do |val, i|
   bar_length = (val * chart_width / max_val).to_i
   puts "#{commits[i]} [Ruby #{ruby_versions[i]}]: #{'#' * bar_length} #{val.round(2)}"
 end
@@ -113,15 +113,15 @@ puts "-" * 90
 latest_idx = curb_vals.size - 1
 latest_curb = curb_vals[latest_idx]
 latest_http = http_vals[latest_idx]
-latest_rquest = rquest_vals[latest_idx]
+latest_wreq = wreq_vals[latest_idx]
 latest_ruby = ruby_versions[latest_idx]
 
 if options[:metric] == 'time'
   puts "In the latest benchmark (Ruby #{latest_ruby}):"
-  puts "- Rquest-rb is #{(latest_curb / latest_rquest).round(2)}x faster than Curb"
-  puts "- Rquest-rb is #{(latest_http / latest_rquest).round(2)}x faster than HTTP.rb"
+  puts "- Wreq-rb is #{(latest_curb / latest_wreq).round(2)}x faster than Curb"
+  puts "- Wreq-rb is #{(latest_http / latest_wreq).round(2)}x faster than HTTP.rb"
 else
   puts "In the latest benchmark (Ruby #{latest_ruby}):"
-  puts "- Rquest-rb handles #{(latest_rquest / latest_curb).round(2)}x more requests per second than Curb"
-  puts "- Rquest-rb handles #{(latest_rquest / latest_http).round(2)}x more requests per second than HTTP.rb"
+  puts "- Wreq-rb handles #{(latest_wreq / latest_curb).round(2)}x more requests per second than Curb"
+  puts "- Wreq-rb handles #{(latest_wreq / latest_http).round(2)}x more requests per second than HTTP.rb"
 end 

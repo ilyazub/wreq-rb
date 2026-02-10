@@ -1,10 +1,10 @@
-# rquest-rb
+# wreq-rb
 
-A high-performance HTTP client for Ruby with TLS fingerprinting capabilities. This gem is a Ruby binding to the blazing-fast Rust [`rquest`](https://github.com/0x676e67/rquest) HTTP client.
+A high-performance HTTP client for Ruby with TLS fingerprinting capabilities. This gem is a Ruby binding to the blazing-fast Rust [`wreq`](https://github.com/0x676e67/wreq) HTTP client.
 
 ## Features
 
-- Fast performance using Rust's `rquest` HTTP client
+- Fast performance using Rust's `wreq` HTTP client
 - API compatible with [http.rb](https://github.com/httprb/http)
 - Browser TLS fingerprinting support
 - HTTP/2 support
@@ -15,7 +15,7 @@ A high-performance HTTP client for Ruby with TLS fingerprinting capabilities. Th
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'rquest-rb'
+gem 'wreq-rb'
 ```
 
 And then execute:
@@ -27,7 +27,7 @@ $ bundle
 Or install it yourself as:
 
 ```
-$ gem install rquest-rb
+$ gem install wreq-rb
 ```
 
 ## Usage
@@ -37,7 +37,7 @@ This gem is designed as a drop-in replacement for the http.rb gem. Here are some
 ### Basic GET Request
 
 ```ruby
-require 'rquest-rb'
+require 'wreq-rb'
 
 # Simple GET request
 response = HTTP.get("https://httpbin.org/get")
@@ -117,11 +117,11 @@ HTTP.patch("https://httpbin.org/patch", body: "Patched content")
 
 ## Benchmarks
 
-rquest-rb is designed to be a high-performance alternative to other Ruby HTTP clients. Here's how it compares:
+wreq-rb is designed to be a high-performance alternative to other Ruby HTTP clients. Here's how it compares:
 
 ### Running Benchmarks
 
-The project includes benchmarks to compare rquest-rb with other popular Ruby HTTP clients.
+The project includes benchmarks to compare wreq-rb with other popular Ruby HTTP clients.
 
 ```
 $ bundle exec ruby benchmark/http_clients_benchmark.rb
@@ -134,33 +134,33 @@ Recent benchmark results:
 Comparison:
                 curb:       59.7 i/s
             typhoeus:       47.6 i/s - 1.25x  slower
-           rquest-rb:       19.5 i/s - 3.07x  slower
+             wreq-rb:       19.5 i/s - 3.07x  slower
              http.rb:       10.6 i/s - 5.61x  slower
                httpx:        9.0 i/s - 6.64x  slower
 ```
 
-As shown above, curb is the fastest client, with typhoeus following closely. Rquest-rb provides excellent performance, significantly outperforming both http.rb and httpx in sequential operations.
+As shown above, curb is the fastest client, with typhoeus following closely. Wreq-rb provides excellent performance, significantly outperforming both http.rb and httpx in sequential operations.
 
 ### Benchmark History
 
-Benchmarks are automatically run on every push to the master branch using GitHub Actions. This allows us to track performance over time and ensure rquest-rb maintains its performance advantage.
+Benchmarks are automatically run on every push to the master branch using GitHub Actions. This allows us to track performance over time and ensure wreq-rb maintains its performance advantage.
 
 #### Performance Trend Visualization
 
 Benchmark charts are generated for multiple Ruby versions (2.7, 3.0, 3.1, 3.2, 3.3) to track performance across different Ruby implementations.
 
 ##### Combined Performance Comparison
-The following chart shows how rquest-rb compares to other HTTP clients across all tested Ruby versions:
+The following chart shows how wreq-rb compares to other HTTP clients across all tested Ruby versions:
 
-![Combined HTTP Client Performance](https://github.com/0x676e67/rquest-rb/raw/main/docs/assets/combined_time_chart.png)
+![Combined HTTP Client Performance](https://github.com/0x676e67/wreq-rb/raw/main/docs/assets/combined_time_chart.png)
 
-As shown in our latest benchmarks, curb is the fastest client, with typhoeus being a close second. Rquest-rb provides excellent performance, significantly outperforming both HTTP.rb and httpx across all Ruby versions.
+As shown in our latest benchmarks, curb is the fastest client, with typhoeus being a close second. Wreq-rb provides excellent performance, significantly outperforming both HTTP.rb and httpx across all Ruby versions.
 
 ##### Ruby 2.7 (default)
-![Request Time Benchmark Chart (Ruby 2.7)](https://github.com/0x676e67/rquest-rb/raw/main/docs/assets/time_chart-2.7.png)
-![Requests Per Second Benchmark Chart (Ruby 2.7)](https://github.com/0x676e67/rquest-rb/raw/main/docs/assets/rps_chart-2.7.png)
+![Request Time Benchmark Chart (Ruby 2.7)](https://github.com/0x676e67/wreq-rb/raw/main/docs/assets/time_chart-2.7.png)
+![Requests Per Second Benchmark Chart (Ruby 2.7)](https://github.com/0x676e67/wreq-rb/raw/main/docs/assets/rps_chart-2.7.png)
 
-For performance charts of other Ruby versions, see the [benchmark summary page](https://github.com/0x676e67/rquest-rb/blob/main/docs/assets/benchmark_summary.md).
+For performance charts of other Ruby versions, see the [benchmark summary page](https://github.com/0x676e67/wreq-rb/blob/main/docs/assets/benchmark_summary.md).
 
 *Note: These charts are automatically generated during CI runs. The latest charts can be found in the GitHub Actions artifacts.*
 

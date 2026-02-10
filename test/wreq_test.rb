@@ -1,9 +1,9 @@
 require 'minitest/autorun'
-require_relative '../lib/rquest_rb'
+require_relative '../lib/wreq_rb'
 require 'json'
 
-class RquestTest < Minitest::Test
-  HTTP = Rquest::HTTP
+class WreqTest < Minitest::Test
+  HTTP = Wreq::HTTP
 
   def test_basic_get_request
     response = HTTP.get("https://tls.peet.ws/api/all")

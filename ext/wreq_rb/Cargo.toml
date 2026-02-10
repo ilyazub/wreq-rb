@@ -1,16 +1,16 @@
 [package]
-name = "rquest-rb"
+name = "wreq-rb"
 version = "0.2.0"
 edition = "2024"
-description = "Ruby bindings for the rquest Rust HTTP client, a drop-in replacement for http.rb gem"
+description = "Ruby bindings for the wreq Rust HTTP client, a drop-in replacement for http.rb gem"
 license = "MIT"
 authors = ["SerpApi Team"]
-repository = "https://github.com/ilyazub/rquest-rb"
+repository = "https://github.com/ilyazub/wreq-rb"
 links = "ruby"
 build = "build.rs"
 
 [lib]
-name = "rquest_rb"
+name = "wreq_rb"
 crate-type = ["cdylib"]
 
 [dependencies]
@@ -20,8 +20,8 @@ rb-sys = { version = "0.9.39", features = [
   "bindgen-deprecated-types",
   "stable-api-compiled-fallback",
 ] }
-rquest = "5.1.0"
-rquest-util = "2.1.0"
+wreq = "5.1.0"
+wreq-util = "2.1.0"
 tokio = { version = "1.36", features = ["rt", "rt-multi-thread", "time", "macros"] }
 url = "2.5"
 serde_json = "1.0"

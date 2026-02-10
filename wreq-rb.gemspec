@@ -1,14 +1,14 @@
-require_relative "lib/rquest_rb/version"
+require_relative "lib/wreq_rb/version"
 
 Gem::Specification.new do |spec|
-  spec.name          = "rquest-rb"
-  spec.version       = Rquest::HTTP::VERSION
+  spec.name          = "wreq-rb"
+  spec.version       = Wreq::HTTP::VERSION
   spec.authors       = ["SerpApi Team"]
   spec.email         = ["contact@serpapi.com"]
 
-  spec.summary       = "Ruby bindings for the rquest Rust HTTP client"
+  spec.summary       = "Ruby bindings for the wreq Rust HTTP client"
   spec.description   = "A high-performance drop-in replacement for http.rb gem (HTTP client for Ruby) with TLS fingerprinting capabilities"
-  spec.homepage      = "https://github.com/ilyazub/rquest-rb"
+  spec.homepage      = "https://github.com/ilyazub/wreq-rb"
   spec.license       = "MIT"
   spec.required_ruby_version = ">= 2.6.0"
 
@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
   
   # Configure the extension
-  spec.extensions = ["ext/rquest_rb/extconf.rb"]
+  spec.extensions = ["ext/wreq_rb/extconf.rb"]
   spec.extra_rdoc_files = ["README.md", "LICENSE.txt"]
 
   # needed until rubygems supports Rust support is out of beta

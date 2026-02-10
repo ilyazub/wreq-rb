@@ -3,9 +3,9 @@ use magnus::{
     Error as MagnusError, IntoValue, Module, Object, RHash, Symbol, TryConvert, Value, exception,
     function, method,
 };
-use rquest::redirect::Policy;
-use rquest::{Error as RquestError, Response as RquestResponse};
-use rquest_util::Emulation as RquestEmulation;
+use wreq::redirect::Policy;
+use wreq::{Error as WreqError, Response as WreqResponse};
+use wreq_util::Emulation as WreqEmulation;
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::collections::hash_map::RandomState;
@@ -15,7 +15,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::runtime::Runtime;
 
-// Fast random implementation similar to rquest-util crate
+// Fast random implementation similar to wreq-util crate
 fn fast_random() -> u64 {
     thread_local! {
         static RNG: Cell<Wrapping<u64>> = Cell::new(Wrapping(seed()));
@@ -46,32 +46,32 @@ fn fast_random() -> u64 {
     })
 }
 
-fn get_random_desktop_emulation() -> RquestEmulation {
+fn get_random_desktop_emulation() -> WreqEmulation {
     let browsers = [
-        RquestEmulation::Chrome134,
-        RquestEmulation::Chrome128,
-        RquestEmulation::Chrome101,
-        RquestEmulation::Firefox135,
-        RquestEmulation::Safari17_0,
+        WreqEmulation::Chrome134,
+        WreqEmulation::Chrome128,
+        WreqEmulation::Chrome101,
+        WreqEmulation::Firefox135,
+        WreqEmulation::Safari17_0,
     ];
 
     let index = (fast_random() as usize) % browsers.len();
     browsers[index]
 }
 
-fn get_random_mobile_emulation() -> RquestEmulation {
+fn get_random_mobile_emulation() -> WreqEmulation {
     let browsers = [
-        RquestEmulation::SafariIos17_4_1,
-        RquestEmulation::SafariIos17_2,
-        RquestEmulation::SafariIos16_5,
-        RquestEmulation::FirefoxAndroid135,
+        WreqEmulation::SafariIos17_4_1,
+        WreqEmulation::SafariIos17_2,
+        WreqEmulation::SafariIos16_5,
+        WreqEmulation::FirefoxAndroid135,
     ];
 
     let index = (fast_random() as usize) % browsers.len();
     browsers[index]
 }
 
-fn get_random_emulation() -> RquestEmulation {
+fn get_random_emulation() -> WreqEmulation {
     if fast_random() % 100 < 50 {
         get_random_desktop_emulation()
     } else {
@@ -79,7 +79,7 @@ fn get_random_emulation() -> RquestEmulation {
     }
 }
 
-fn rquest_error_to_magnus_error(err: RquestError) -> MagnusError {
+fn wreq_error_to_magnus_error(err: WreqError) -> MagnusError {
     MagnusError::new(
         exception::runtime_error(),
         format!("HTTP request failed: {}", err),
@@ -119,11 +119,11 @@ fn extract_body(args: &[Value]) -> Result<Option<String>, MagnusError> {
     }
 }
 
-#[magnus::wrap(class = "Rquest::HTTP::Client")]
-struct ClientWrap(rquest::Client);
+#[magnus::wrap(class = "Wreq::HTTP::Client")]
+struct ClientWrap(wreq::Client);
 
 impl ClientWrap {
-    fn inner(&self) -> &rquest::Client {
+    fn inner(&self) -> &wreq::Client {
         &self.0
     }
 }
@@ -132,7 +132,7 @@ impl Clone for ClientWrap {
     fn clone(&self) -> Self {
         // This creates a new client with the same settings
         ClientWrap(
-            rquest::Client::builder()
+            wreq::Client::builder()
                 .emulation(get_random_emulation())
                 .build()
                 .expect("Failed to create client"),
@@ -140,7 +140,7 @@ impl Clone for ClientWrap {
     }
 }
 
-#[magnus::wrap(class = "Rquest::HTTP::Client")]
+#[magnus::wrap(class = "Wreq::HTTP::Client")]
 struct RbHttpClient {
     client: ClientWrap,
     default_headers: HashMap<String, String>,
@@ -153,7 +153,7 @@ impl RbHttpClient {
     fn new() -> Self {
         Self {
             client: ClientWrap(
-                rquest::Client::builder()
+                wreq::Client::builder()
                     .emulation(get_random_emulation())
                     .build()
                     .expect("Failed to create client"),
@@ -168,7 +168,7 @@ impl RbHttpClient {
     fn new_desktop() -> Self {
         Self {
             client: ClientWrap(
-                rquest::Client::builder()
+                wreq::Client::builder()
                     .emulation(get_random_desktop_emulation())
                     .build()
                     .expect("Failed to create client"),
@@ -183,7 +183,7 @@ impl RbHttpClient {
     fn new_mobile() -> Self {
         Self {
             client: ClientWrap(
-                rquest::Client::builder()
+                wreq::Client::builder()
                     .emulation(get_random_mobile_emulation())
                     .build()
                     .expect("Failed to create client"),
@@ -212,7 +212,7 @@ impl RbHttpClient {
         new_client.proxy = Some(proxy.clone());
 
         new_client.client = ClientWrap(
-            rquest::Client::builder()
+                wreq::Client::builder()
                 .emulation(get_random_emulation())
                 .proxy(proxy)
                 .build()
@@ -256,7 +256,7 @@ impl RbHttpClient {
 
         match rt.block_on(req.send()) {
             Ok(response) => Ok(RbHttpResponse::new(response)),
-            Err(e) => Err(rquest_error_to_magnus_error(e)),
+            Err(e) => Err(wreq_error_to_magnus_error(e)),
         }
     }
 
@@ -298,7 +298,7 @@ impl RbHttpClient {
 
         match rt.block_on(req.send()) {
             Ok(response) => Ok(RbHttpResponse::new(response)),
-            Err(e) => Err(rquest_error_to_magnus_error(e)),
+            Err(e) => Err(wreq_error_to_magnus_error(e)),
         }
     }
 
@@ -340,7 +340,7 @@ impl RbHttpClient {
 
         match rt.block_on(req.send()) {
             Ok(response) => Ok(RbHttpResponse::new(response)),
-            Err(e) => Err(rquest_error_to_magnus_error(e)),
+            Err(e) => Err(wreq_error_to_magnus_error(e)),
         }
     }
 
@@ -372,7 +372,7 @@ impl RbHttpClient {
 
         match rt.block_on(req.send()) {
             Ok(response) => Ok(RbHttpResponse::new(response)),
-            Err(e) => Err(rquest_error_to_magnus_error(e)),
+            Err(e) => Err(wreq_error_to_magnus_error(e)),
         }
     }
 
@@ -404,7 +404,7 @@ impl RbHttpClient {
 
         match rt.block_on(req.send()) {
             Ok(response) => Ok(RbHttpResponse::new(response)),
-            Err(e) => Err(rquest_error_to_magnus_error(e)),
+            Err(e) => Err(wreq_error_to_magnus_error(e)),
         }
     }
 
@@ -446,7 +446,7 @@ impl RbHttpClient {
 
         match rt.block_on(req.send()) {
             Ok(response) => Ok(RbHttpResponse::new(response)),
-            Err(e) => Err(rquest_error_to_magnus_error(e)),
+            Err(e) => Err(wreq_error_to_magnus_error(e)),
         }
     }
 
@@ -485,13 +485,13 @@ struct ResponseData {
     url: String,
 }
 
-#[magnus::wrap(class = "Rquest::HTTP::Response")]
+#[magnus::wrap(class = "Wreq::HTTP::Response")]
 struct RbHttpResponse {
     data: Arc<ResponseData>,
 }
 
 impl RbHttpResponse {
-    fn new(response: RquestResponse) -> Self {
+    fn new(response: WreqResponse) -> Self {
         let rt = get_runtime();
 
         let status = response.status().as_u16();
@@ -629,8 +629,8 @@ fn rb_proxy(proxy: String) -> RbHttpClient {
 
 #[magnus::init]
 fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
-    let rquest_module = ruby.define_module("Rquest")?;
-    let http_module = rquest_module.define_module("HTTP")?;
+    let wreq_module = ruby.define_module("Wreq")?;
+    let http_module = wreq_module.define_module("HTTP")?;
 
     let response_class = http_module.define_class("Response", ruby.class_object())?;
     response_class.define_method("status", method!(RbHttpResponse::status, 0))?;

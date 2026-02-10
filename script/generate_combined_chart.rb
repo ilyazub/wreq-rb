@@ -42,10 +42,10 @@ history_files.each do |ruby_version, file|
         date: latest["date"],
         curb_time: latest["curb_time"].to_f,
         http_time: latest["http_time"].to_f,
-        rquest_time: latest["rquest_time"].to_f,
+        wreq_time: latest["wreq_time"].to_f,
         curb_rps: latest["curb_req_per_sec"].to_f,
         http_rps: latest["http_req_per_sec"].to_f,
-        rquest_rps: latest["rquest_req_per_sec"].to_f
+        wreq_rps: latest["wreq_req_per_sec"].to_f
       }
     end
   rescue => e
@@ -72,7 +72,7 @@ time_graph = GraphViz.new(:G, type: :digraph) do |g|
   g[:fontsize] = '18'
   
   # Calculate the maximum time for scaling the bars
-  max_time = all_data.map { |d| [d[:curb_time], d[:http_time], d[:rquest_time]].max }.max
+  max_time = all_data.map { |d| [d[:curb_time], d[:http_time], d[:wreq_time]].max }.max
   scale_factor = 400.0 / max_time  # Scale to fit within 400 pixels
   
   # Create a node for the table
@@ -82,7 +82,7 @@ time_graph = GraphViz.new(:G, type: :digraph) do |g|
         <TD BGCOLOR="#EEEEEE"><B>Ruby Version</B></TD>
         <TD BGCOLOR="#EEEEEE"><B>Curb</B></TD>
         <TD BGCOLOR="#EEEEEE"><B>HTTP.rb</B></TD>
-        <TD BGCOLOR="#EEEEEE"><B>Rquest-rb</B></TD>
+        <TD BGCOLOR="#EEEEEE"><B>Wreq-rb</B></TD>
         <TD BGCOLOR="#EEEEEE"><B>Visual Comparison (seconds)</B></TD>
       </TR>
   HTML
@@ -94,7 +94,7 @@ time_graph = GraphViz.new(:G, type: :digraph) do |g|
         <TD>#{data[:ruby_version]}</TD>
         <TD>#{data[:curb_time].round(2)}</TD>
         <TD>#{data[:http_time].round(2)}</TD>
-        <TD>#{data[:rquest_time].round(2)}</TD>
+        <TD>#{data[:wreq_time].round(2)}</TD>
         <TD>
           <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
             <TR>
@@ -108,9 +108,9 @@ time_graph = GraphViz.new(:G, type: :digraph) do |g|
               <TD ALIGN="LEFT">#{data[:http_time].round(2)}s</TD>
             </TR>
             <TR>
-              <TD ALIGN="RIGHT">Rquest-rb</TD>
-              <TD BGCOLOR="#99FF99" WIDTH="#{(data[:rquest_time] * scale_factor).to_i}"> </TD>
-              <TD ALIGN="LEFT">#{data[:rquest_time].round(2)}s</TD>
+              <TD ALIGN="RIGHT">Wreq-rb</TD>
+              <TD BGCOLOR="#99FF99" WIDTH="#{(data[:wreq_time] * scale_factor).to_i}"> </TD>
+              <TD ALIGN="LEFT">#{data[:wreq_time].round(2)}s</TD>
             </TR>
           </TABLE>
         </TD>
@@ -136,7 +136,7 @@ rps_graph = GraphViz.new(:G, type: :digraph) do |g|
   g[:fontsize] = '18'
   
   # Calculate the maximum RPS for scaling the bars
-  max_rps = all_data.map { |d| [d[:curb_rps], d[:http_rps], d[:rquest_rps]].max }.max
+  max_rps = all_data.map { |d| [d[:curb_rps], d[:http_rps], d[:wreq_rps]].max }.max
   scale_factor = 400.0 / max_rps  # Scale to fit within 400 pixels
   
   # Create a node for the table
@@ -146,7 +146,7 @@ rps_graph = GraphViz.new(:G, type: :digraph) do |g|
         <TD BGCOLOR="#EEEEEE"><B>Ruby Version</B></TD>
         <TD BGCOLOR="#EEEEEE"><B>Curb</B></TD>
         <TD BGCOLOR="#EEEEEE"><B>HTTP.rb</B></TD>
-        <TD BGCOLOR="#EEEEEE"><B>Rquest-rb</B></TD>
+        <TD BGCOLOR="#EEEEEE"><B>Wreq-rb</B></TD>
         <TD BGCOLOR="#EEEEEE"><B>Visual Comparison (req/s)</B></TD>
       </TR>
   HTML
@@ -158,7 +158,7 @@ rps_graph = GraphViz.new(:G, type: :digraph) do |g|
         <TD>#{data[:ruby_version]}</TD>
         <TD>#{data[:curb_rps].round(2)}</TD>
         <TD>#{data[:http_rps].round(2)}</TD>
-        <TD>#{data[:rquest_rps].round(2)}</TD>
+        <TD>#{data[:wreq_rps].round(2)}</TD>
         <TD>
           <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">
             <TR>
@@ -172,9 +172,9 @@ rps_graph = GraphViz.new(:G, type: :digraph) do |g|
               <TD ALIGN="LEFT">#{data[:http_rps].round(2)}</TD>
             </TR>
             <TR>
-              <TD ALIGN="RIGHT">Rquest-rb</TD>
-              <TD BGCOLOR="#99FF99" WIDTH="#{(data[:rquest_rps] * scale_factor).to_i}"> </TD>
-              <TD ALIGN="LEFT">#{data[:rquest_rps].round(2)}</TD>
+              <TD ALIGN="RIGHT">Wreq-rb</TD>
+              <TD BGCOLOR="#99FF99" WIDTH="#{(data[:wreq_rps] * scale_factor).to_i}"> </TD>
+              <TD ALIGN="LEFT">#{data[:wreq_rps].round(2)}</TD>
             </TR>
           </TABLE>
         </TD>
@@ -209,7 +209,7 @@ rescue StandardError => e
   File.open("#{output_dir}/combined_time_chart.txt", 'w') do |f|
     f.puts "HTTP Client Performance by Ruby Version - Request Time (seconds, lower is better)"
     f.puts "-" * 100
-    f.puts "Ruby Version | Curb     | HTTP.rb  | Rquest-rb"
+    f.puts "Ruby Version | Curb     | HTTP.rb  | Wreq-rb"
     f.puts "-" * 100
     
     all_data.each do |data|
@@ -217,7 +217,7 @@ rescue StandardError => e
         data[:ruby_version], 
         data[:curb_time], 
         data[:http_time], 
-        data[:rquest_time]
+        data[:wreq_time]
       )
     end
   end
@@ -225,7 +225,7 @@ rescue StandardError => e
   File.open("#{output_dir}/combined_rps_chart.txt", 'w') do |f|
     f.puts "HTTP Client Performance by Ruby Version - Requests Per Second (higher is better)"
     f.puts "-" * 100
-    f.puts "Ruby Version | Curb     | HTTP.rb  | Rquest-rb"
+    f.puts "Ruby Version | Curb     | HTTP.rb  | Wreq-rb"
     f.puts "-" * 100
     
     all_data.each do |data|
@@ -233,7 +233,7 @@ rescue StandardError => e
         data[:ruby_version], 
         data[:curb_rps], 
         data[:http_rps], 
-        data[:rquest_rps]
+        data[:wreq_rps]
       )
     end
   end

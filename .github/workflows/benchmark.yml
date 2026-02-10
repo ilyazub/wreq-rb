@@ -53,20 +53,20 @@ jobs:
         run: |
           # Create a CSV file for historical data if it doesn't exist
           if [ ! -f benchmark-results/benchmark-history-${{ matrix.ruby }}.csv ]; then
-            echo "date,commit,ruby_version,curb_time,http_time,rquest_time,curb_req_per_sec,http_req_per_sec,rquest_req_per_sec" > benchmark-results/benchmark-history-${{ matrix.ruby }}.csv
+            echo "date,commit,ruby_version,curb_time,http_time,wreq_time,curb_req_per_sec,http_req_per_sec,wreq_req_per_sec" > benchmark-results/benchmark-history-${{ matrix.ruby }}.csv
           fi
           
           # Extract values from the benchmark output
           CURB_TIME=$(grep "Curb:" benchmark-results/benchmark-${{ matrix.ruby }}.md | grep "seconds" | sed -E 's/.*Curb: +([0-9.]+) seconds.*/\1/')
           HTTP_TIME=$(grep "HTTP.rb:" benchmark-results/benchmark-${{ matrix.ruby }}.md | grep "seconds" | sed -E 's/.*HTTP.rb: +([0-9.]+) seconds.*/\1/')
-          RQUEST_TIME=$(grep "Rquest-rb:" benchmark-results/benchmark-${{ matrix.ruby }}.md | grep "seconds" | sed -E 's/.*Rquest-rb: +([0-9.]+) seconds.*/\1/')
+          WREQ_TIME=$(grep "Wreq-rb:" benchmark-results/benchmark-${{ matrix.ruby }}.md | grep "seconds" | sed -E 's/.*Wreq-rb: +([0-9.]+) seconds.*/\1/')
           
           CURB_REQ_PER_SEC=$(grep "Curb:" benchmark-results/benchmark-${{ matrix.ruby }}.md | grep "req/s" | sed -E 's/.*\(([0-9.]+) req\/s\).*/\1/')
           HTTP_REQ_PER_SEC=$(grep "HTTP.rb:" benchmark-results/benchmark-${{ matrix.ruby }}.md | grep "req/s" | sed -E 's/.*\(([0-9.]+) req\/s\).*/\1/')
-          RQUEST_REQ_PER_SEC=$(grep "Rquest-rb:" benchmark-results/benchmark-${{ matrix.ruby }}.md | grep "req/s" | sed -E 's/.*\(([0-9.]+) req\/s\).*/\1/')
+          WREQ_REQ_PER_SEC=$(grep "Wreq-rb:" benchmark-results/benchmark-${{ matrix.ruby }}.md | grep "req/s" | sed -E 's/.*\(([0-9.]+) req\/s\).*/\1/')
           
           # Append data to CSV with Ruby version
-          echo "$(date +%Y-%m-%d),${{ github.sha }},${{ matrix.ruby }},$CURB_TIME,$HTTP_TIME,$RQUEST_TIME,$CURB_REQ_PER_SEC,$HTTP_REQ_PER_SEC,$RQUEST_REQ_PER_SEC" >> benchmark-results/benchmark-history-${{ matrix.ruby }}.csv
+          echo "$(date +%Y-%m-%d),${{ github.sha }},${{ matrix.ruby }},$CURB_TIME,$HTTP_TIME,$WREQ_TIME,$CURB_REQ_PER_SEC,$HTTP_REQ_PER_SEC,$WREQ_REQ_PER_SEC" >> benchmark-results/benchmark-history-${{ matrix.ruby }}.csv
 
       - name: Download previous benchmark history
         uses: actions/download-artifact@v4

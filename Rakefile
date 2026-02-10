@@ -2,7 +2,7 @@ require "bundler/gem_tasks"
 require "rake/testtask"
 require "rake/extensiontask"
 
-GEMSPEC = Gem::Specification.load("rquest-rb.gemspec") || abort("Could not load rquest-rb.gemspec")
+GEMSPEC = Gem::Specification.load("wreq-rb.gemspec") || abort("Could not load wreq-rb.gemspec")
 
 # Define supported platforms (focusing on Linux targets for cross-rs)
 SUPPORTED_PLATFORMS = [
@@ -22,9 +22,9 @@ def build_for_platform(platform)
 end
 
 # Define the extension task
-Rake::ExtensionTask.new("rquest_rb", GEMSPEC) do |ext|
-  ext.lib_dir = "lib/rquest"
-  ext.ext_dir = "ext/rquest_rb"
+Rake::ExtensionTask.new("wreq_rb", GEMSPEC) do |ext|
+  ext.lib_dir = "lib/wreq"
+  ext.ext_dir = "ext/wreq_rb"
   ext.cross_compile = true
   ext.cross_platform = SUPPORTED_PLATFORMS
 end
@@ -99,7 +99,7 @@ namespace :test do
   desc "Run memory checks using ruby_memcheck"
   task :memcheck do
     RubyMemcheck.config do |config|
-      config.binary_name = 'rquest_rb'
+      config.binary_name = 'wreq_rb'
       # Configure suppressions for known false positives
       config.suppressions = [
         # Add specific suppressions if needed
@@ -150,7 +150,7 @@ Rake::TestTask.new(:ruby_test) do |t|
   t.libs << "test"
   t.libs << "lib"
   t.libs << File.expand_path("lib", __dir__)  # Add the lib directory to load path
-  t.libs << File.expand_path("lib/rquest", __dir__)  # Add the native extension directory
+  t.libs << File.expand_path("lib/wreq", __dir__)  # Add the native extension directory
   t.test_files = FileList["test/**/*_test.rb"]
   t.deps << :compile  # Make sure the native extension is built before running tests
 end
