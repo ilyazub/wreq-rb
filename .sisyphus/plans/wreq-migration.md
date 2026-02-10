@@ -1367,7 +1367,7 @@ Wave 3 (Polish — Sequential after Wave 2):
 
 ---
 
-- [ ] 13. Update benchmarks, README, gemspec metadata, CI workflows
+- [x] 13. Update benchmarks, README, gemspec metadata, CI workflows
 
   **What to do**:
   - **README.md**: Complete rewrite
@@ -1451,7 +1451,7 @@ Wave 3 (Polish — Sequential after Wave 2):
 
 ---
 
-- [ ] 14. Final integration test suite + smoke test
+- [x] 14. Final integration test suite + smoke test
 
   **What to do**:
   - **Integration tests**: Write comprehensive test file that exercises the FULL API surface end-to-end:

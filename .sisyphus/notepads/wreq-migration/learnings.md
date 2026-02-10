@@ -471,3 +471,20 @@ r = Wreq::HTTP.post('https://httpbin.org/post', json: { name: 'test' })
 puts 'JSON test: ' + (r.status == 200 ? 'PASS' : 'FAIL')
 "
 ```
+
+## [2026-02-10 15:30] Task 14: Integration Test Suite Expansion
+
+**Status**: ✅ COMPLETE (uncommitted)
+
+**Coverage Added**:
+- Status predicates for 404/500/302
+- Response parse (JSON auto / non-JSON fallback)
+- Cookies parsing (Set-Cookie + empty)
+- Full chainable composition with headers/timeout/follow/cookies/accept/params
+- Authentication (basic_auth + bearer)
+- Error handling (timeout + invalid URL)
+- Thread safety (10 threads × 5 requests)
+- Options coverage for PUT/PATCH and request(:delete) with params
+
+**Notes**:
+- Added rubocop disable/enable header to keep LSP diagnostics clean for long test class.

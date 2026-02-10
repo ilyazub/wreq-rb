@@ -113,3 +113,13 @@ fn execute_request(
 - Verify compilation: bundle exec rake compile
 - Run tests: bundle exec rake ruby_test
 - Commit with message: "feat: add options hash support (:json, :form, :params) and generic .request() method"
+
+## [2026-02-10 15:35] Task 14: ruby_test blocked by missing cargo
+
+**Status**: 🚧 BLOCKED (local toolchain)
+
+**Error**:
+- `bundle exec rake ruby_test` failed during compile: `gmake: cargo: No such file or directory`
+
+**Impact**:
+- Tests could not run locally; needs Rust toolchain available in PATH
