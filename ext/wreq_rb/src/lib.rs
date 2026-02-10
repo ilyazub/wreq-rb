@@ -448,14 +448,36 @@ impl RbHttpClient {
         Ok(new_client)
     }
 
-    fn follow(&self, follow: bool) -> Self {
+    fn follow(&self, args: &[Value]) -> Result<Self, MagnusError> {
         let mut new_client = self.clone();
-        if follow {
+        
+        if args.is_empty() {
             new_client.redirect_policy = Some(Policy::limited(10));
         } else {
-            new_client.redirect_policy = Some(Policy::none());
+            let arg = args[0];
+            if let Some(bool_val) = bool::try_convert(arg).ok() {
+                if bool_val {
+                    new_client.redirect_policy = Some(Policy::limited(10));
+                } else {
+                    new_client.redirect_policy = Some(Policy::none());
+                }
+            } else if let Ok(hash) = RHash::try_convert(arg) {
+                let max_hops_key = Symbol::new("max_hops").into_value();
+                if let Some(max_hops_val) = hash.get(max_hops_key) {
+                    let max_hops = usize::try_convert(max_hops_val)?;
+                    new_client.redirect_policy = Some(Policy::limited(max_hops));
+                } else {
+                    new_client.redirect_policy = Some(Policy::limited(10));
+                }
+            } else {
+                return Err(MagnusError::new(
+                    exception::arg_error(),
+                    "follow() requires bool or hash with :max_hops"
+                ));
+            }
         }
-        new_client
+        
+        Ok(new_client)
     }
 
     fn timeout(&self, secs: u64) -> Self {
@@ -798,8 +820,8 @@ fn rb_headers(headers_hash: RHash) -> Result<RbHttpClient, MagnusError> {
     Ok(client.headers(headers_hash))
 }
 
-fn rb_follow(follow: bool) -> Result<RbHttpClient, MagnusError> {
-    Ok(RbHttpClient::new()?.follow(follow))
+fn rb_follow(args: &[Value]) -> Result<RbHttpClient, MagnusError> {
+    RbHttpClient::new()?.follow(args)
 }
 
 fn rb_timeout(secs: u64) -> Result<RbHttpClient, MagnusError> {
@@ -862,7 +884,7 @@ fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
     client_class.define_singleton_method("new_desktop", function!(RbHttpClient::new_desktop, 0))?;
     client_class.define_singleton_method("new_mobile", function!(RbHttpClient::new_mobile, 0))?;
     client_class.define_method("with_headers", method!(RbHttpClient::with_headers, 1))?;
-    client_class.define_method("follow", method!(RbHttpClient::follow, 1))?;
+    client_class.define_method("follow", method!(RbHttpClient::follow, -1))?;
     client_class.define_method("timeout", method!(RbHttpClient::timeout, 1))?;
     client_class.define_method("with_proxy", method!(RbHttpClient::with_proxy, 1))?;
     client_class.define_method("via", method!(RbHttpClient::via, -1))?;
@@ -887,7 +909,7 @@ fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
     http_module.define_module_function("head", function!(rb_head, 1))?;
     http_module.define_module_function("patch", function!(rb_patch, -1))?;
     http_module.define_module_function("headers", function!(rb_headers, 1))?;
-    http_module.define_module_function("follow", function!(rb_follow, 1))?;
+    http_module.define_module_function("follow", function!(rb_follow, -1))?;
     http_module.define_module_function("timeout", function!(rb_timeout, 1))?;
     http_module.define_module_function("proxy", function!(rb_proxy, 1))?;
     http_module.define_module_function("via", function!(rb_via, -1))?;

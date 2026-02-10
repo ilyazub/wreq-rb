@@ -209,3 +209,57 @@ HTTP.cookies(session: "test")
 - Symbol normalization limited to 4 types (extensible if needed)
 - No cookie jar implementation (per spec - just sending cookies)
 
+
+## [2026-02-10 13:45] Task 7: Response .parse + Enhanced Body Handling
+
+**Status**: ✅ COMPLETE (Commit acea36b)
+
+**Implementation Pattern** (Ruby layer):
+```ruby
+# lib/wreq_rb.rb
+module Wreq
+  module HTTP
+    class Response
+      def parse
+        ct = content_type
+        if ct && ct.include?("application/json")
+          JSON.parse(body)
+        else
+          body
+        end
+      end
+
+      def flush
+        self
+      end
+    end
+  end
+end
+```
+
+**Ruby API**:
+```ruby
+response = HTTP.get("https://httpbin.org/get")
+parsed = response.parse  # Returns Hash for JSON
+response.body            # Still returns String (backward compat)
+response.flush           # Returns self (chainable)
+```
+
+**Key Insights**:
+- Implemented in Ruby layer per plan recommendation (simpler than Rust↔Ruby JSON interop)
+- parse() checks content_type for "application/json", uses Ruby's JSON.parse
+- Returns body as string for non-JSON content (no MIME type registry needed)
+- flush() returns self for http.rb parity (persistent connection pattern)
+- body is eagerly read in Rust layer, so flush is essentially a no-op
+- Requires "json" stdlib in lib/wreq_rb.rb
+- Zero Rust changes needed
+
+**Files Modified**:
+- `lib/wreq_rb.rb`: Added Response class with parse() and flush() methods
+- `test/wreq_test.rb`: Added 4 tests (parse JSON, parse non-JSON, flush, body compat)
+
+**Design Decision**:
+- Ruby layer > Rust layer for JSON parsing (avoids serde_json dependency, simpler)
+- Auto-detection via content-type (no explicit format parameter needed)
+- Falls back to string for unknown types (safe default)
+

@@ -445,4 +445,28 @@ class WreqTest < Minitest::Test
     assert_instance_of String, response.body
     assert response.body.length > 0
   end
+
+  def test_follow_default
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.follow.get("https://httpbin.org/redirect/1")
+    assert_equal 200, response.status.to_i
+  end
+
+  def test_follow_with_max_hops
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.follow(max_hops: 5).get("https://httpbin.org/redirect/3")
+    assert_equal 200, response.status.to_i
+  end
+
+  def test_follow_true_backward_compat
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.follow(true).get("https://httpbin.org/redirect/1")
+    assert_equal 200, response.status.to_i
+  end
+
+  def test_follow_false_backward_compat
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.follow(false).get("https://httpbin.org/redirect/1")
+    assert response.status.redirect?
+  end
 end 

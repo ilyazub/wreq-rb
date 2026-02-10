@@ -877,7 +877,7 @@ Wave 3 (Polish — Sequential after Wave 2):
 
 ---
 
-- [ ] 7. Response .parse + enhanced body handling
+- [x] 7. Response .parse + enhanced body handling
 
   **What to do**:
 
