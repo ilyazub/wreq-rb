@@ -20,8 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install cURL Headers
-        run: sudo apt-get update && sudo apt-get install libcurl4-openssl-dev
+      - name: Install cURL Headers and Build Dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake perl libclang-dev libcurl4-openssl-dev
 
       - uses: ./.github/actions/setup-rust
         with:

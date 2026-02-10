@@ -21,6 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Install Build Dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake perl libclang-dev
+      
       - uses: ./.github/actions/setup-rust
         with:
           target: ${{ matrix.target }}
