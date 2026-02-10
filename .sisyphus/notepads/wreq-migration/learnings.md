@@ -119,3 +119,93 @@ response.code                     # 200 (backward compat)
 - `.code` still returns Integer (unchanged)
 - `.status` now returns Status object (was Integer) - breaking but matches http.rb
 
+
+## [2026-02-10 13:30] Task 8: Chainable Auth & Accept Methods
+
+**Status**: ✅ COMPLETE (Commit pending)
+
+**Implementation Pattern**:
+```rust
+// cookies() - converts hash to cookie string (line 482-493)
+fn cookies(&self, cookies_hash: RHash) -> Self {
+    let mut new_client = self.clone();
+    let mut cookie_pairs = Vec::new();
+    cookies_hash.foreach(|key: Symbol, value: String| {
+        cookie_pairs.push(format!("{}={}", key.name()?, value));
+        Ok(magnus::r_hash::ForEach::Continue)
+    }).ok();
+    let cookie_string = cookie_pairs.join("; ");
+    new_client.headers.insert("cookie".to_string(), cookie_string);
+    new_client
+}
+
+// basic_auth() - Base64 encoding via Ruby eval (line 496-515)
+fn basic_auth(&self, auth_hash: RHash) -> Result<Self, MagnusError> {
+    let user = auth_hash.get(Symbol::new("user").into_value())?;
+    let pass = auth_hash.get(Symbol::new("pass").into_value())?;
+    let credentials = format!("{}:{}", user_str, pass_str);
+    let encoded = magnus::eval::<String>(&format!(
+        "require 'base64'; Base64.strict_encode64('{}')", credentials
+    ))?;
+    new_client.headers.insert("authorization".to_string(), format!("Basic {}", encoded));
+    Ok(new_client)
+}
+
+// auth() - direct Authorization header (line 517-521)
+fn auth(&self, auth_value: String) -> Self {
+    new_client.headers.insert("authorization".to_string(), auth_value);
+    new_client
+}
+
+// accept() - symbol normalization (line 523-541)
+fn accept(&self, accept_value: Value) -> Result<Self, MagnusError> {
+    let accept_header = if let Some(sym) = Symbol::from_value(accept_value) {
+        match sym.name()?.as_str() {
+            "json" => "application/json",
+            "xml" => "application/xml",
+            "html" => "text/html",
+            "text" => "text/plain",
+            _ => return Err(...)
+        }
+    } else {
+        &String::try_convert(accept_value)?
+    };
+    new_client.headers.insert("accept".to_string(), accept_header.to_string());
+    Ok(new_client)
+}
+```
+
+**Ruby API**:
+```ruby
+HTTP.cookies(session: "abc123", user: "test").get(url)
+HTTP.basic_auth(user: "user", pass: "pass").get(url)
+HTTP.auth("Bearer token123").get(url)
+HTTP.accept(:json).get(url)
+HTTP.accept("text/html").get(url)
+
+# Chainable
+HTTP.cookies(session: "test")
+    .headers(x_custom: "value")
+    .accept(:json)
+    .basic_auth(user: "u", pass: "p")
+    .get(url)
+```
+
+**Key Insights**:
+- cookies(): Uses `RHash.foreach` to iterate hash, joins with `"; "`
+- basic_auth(): Uses `magnus::eval` to call Ruby's Base64 encoder (avoids Rust base64 dependency)
+- auth(): Simple header setter, supports any auth scheme ("Bearer", "Digest", etc)
+- accept(): Symbol-to-MIME mapping for convenience (`:json` → `"application/json"`)
+- All methods set headers via `headers.insert()` - applied during request execution
+- All chainable via clone-mutate-return pattern
+- Module-level wrappers follow established pattern: `new()? + instance_method()`
+
+**Files Modified**:
+- `ext/wreq_rb/src/lib.rs`: 4 new methods + 4 module wrappers + registrations
+- `test/wreq_test.rb`: 6 tests (cookies, basic_auth, auth, accept symbol/string, chainable)
+
+**Trade-offs**:
+- Uses Ruby eval for Base64 (acceptable, avoids dependency)
+- Symbol normalization limited to 4 types (extensible if needed)
+- No cookie jar implementation (per spec - just sending cookies)
+

@@ -961,7 +961,7 @@ Wave 3 (Polish — Sequential after Wave 2):
 
 ---
 
-- [ ] 8. Chainable .cookies(), .basic_auth(), .auth(), .accept()
+- [x] 8. Chainable .cookies(), .basic_auth(), .auth(), .accept()
 
   **What to do**:
 

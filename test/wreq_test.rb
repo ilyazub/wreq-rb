@@ -415,4 +415,34 @@ class WreqTest < Minitest::Test
       .get("https://httpbin.org/get")
     assert_equal 200, response.status.to_i
   end
+
+  def test_parse_json
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.get("https://httpbin.org/get")
+    parsed = response.parse
+    assert_instance_of Hash, parsed
+    assert parsed.key?("url")
+  end
+
+  def test_parse_non_json
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.get("https://httpbin.org/html")
+    parsed = response.parse
+    assert_instance_of String, parsed
+    assert parsed.include?("<html>")
+  end
+
+  def test_flush
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.get("https://httpbin.org/get")
+    flushed = response.flush
+    assert_equal response, flushed
+  end
+
+  def test_body_backward_compat
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.get("https://httpbin.org/get")
+    assert_instance_of String, response.body
+    assert response.body.length > 0
+  end
 end 
