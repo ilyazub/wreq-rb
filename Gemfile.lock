@@ -67,10 +67,10 @@ DEPENDENCIES
   rake (~> 13.2)
   rake-compiler
   rb_sys (~> 0.9)
-  wreq-rb!
   ruby-graphviz (~> 1.2)
   ruby_memcheck (~> 1.0)
   typhoeus (~> 1.4)
+  wreq-rb!
 
 BUNDLED WITH
    2.4.22

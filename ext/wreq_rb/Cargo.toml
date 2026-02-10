@@ -20,8 +20,8 @@ rb-sys = { version = "0.9.39", features = [
   "bindgen-deprecated-types",
   "stable-api-compiled-fallback",
 ] }
-wreq = "5.1.0"
-wreq-util = "2.1.0"
+wreq = "6.0.0-rc.27"
+wreq-util = "3.0.0-rc.9"
 tokio = { version = "1.36", features = ["rt", "rt-multi-thread", "time", "macros"] }
 url = "2.5"
 serde_json = "1.0"
