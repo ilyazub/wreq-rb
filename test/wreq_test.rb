@@ -374,4 +374,45 @@ class WreqTest < Minitest::Test
     assert_equal 200, response.code
     assert_kind_of Integer, response.code
   end
+
+  def test_cookies
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.cookies(session: "abc123", user: "test").get("https://httpbin.org/cookies")
+    assert_equal 200, response.status.to_i
+    assert response.body.include?("abc123")
+  end
+
+  def test_basic_auth
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.basic_auth(user: "user", pass: "passwd").get("https://httpbin.org/basic-auth/user/passwd")
+    assert_equal 200, response.status.to_i
+  end
+
+  def test_auth_bearer
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.auth("Bearer test-token").get("https://httpbin.org/bearer")
+    assert_equal 401, response.status.to_i
+  end
+
+  def test_accept_symbol
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.accept(:json).get("https://httpbin.org/get")
+    assert_equal 200, response.status.to_i
+  end
+
+  def test_accept_string
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.accept("text/html").get("https://httpbin.org/html")
+    assert_equal 200, response.status.to_i
+  end
+
+  def test_chainable_auth_methods
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP
+      .cookies(session: "test")
+      .headers(x_custom: "value")
+      .accept(:json)
+      .get("https://httpbin.org/get")
+    assert_equal 200, response.status.to_i
+  end
 end 

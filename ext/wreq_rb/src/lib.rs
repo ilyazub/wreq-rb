@@ -479,6 +479,66 @@ impl RbHttpClient {
         self.with_proxy(proxy_url)
     }
 
+    fn cookies(&self, cookies_hash: RHash) -> Self {
+        let mut new_client = self.clone();
+        let mut cookie_pairs = Vec::new();
+        
+        cookies_hash.foreach(|key: Symbol, value: String| {
+            cookie_pairs.push(format!("{}={}", key.name()?, value));
+            Ok(magnus::r_hash::ForEach::Continue)
+        }).ok();
+        
+        let cookie_string = cookie_pairs.join("; ");
+        new_client.headers.insert("cookie".to_string(), cookie_string);
+        new_client
+    }
+
+    fn basic_auth(&self, auth_hash: RHash) -> Result<Self, MagnusError> {
+        let user_key = Symbol::new("user").into_value();
+        let pass_key = Symbol::new("pass").into_value();
+        
+        let user = auth_hash.get(user_key)
+            .ok_or_else(|| MagnusError::new(exception::arg_error(), "basic_auth requires :user"))?;
+        let pass = auth_hash.get(pass_key)
+            .ok_or_else(|| MagnusError::new(exception::arg_error(), "basic_auth requires :pass"))?;
+        
+        let user_str = String::try_convert(user)?;
+        let pass_str = String::try_convert(pass)?;
+        
+        let credentials = format!("{}:{}", user_str, pass_str);
+        let encoded = magnus::eval::<String>(&format!("require 'base64'; Base64.strict_encode64('{}')", credentials))
+            .map_err(|e| MagnusError::new(exception::runtime_error(), format!("Base64 encoding failed: {}", e)))?;
+        
+        let mut new_client = self.clone();
+        new_client.headers.insert("authorization".to_string(), format!("Basic {}", encoded));
+        Ok(new_client)
+    }
+
+    fn auth(&self, auth_value: String) -> Self {
+        let mut new_client = self.clone();
+        new_client.headers.insert("authorization".to_string(), auth_value);
+        new_client
+    }
+
+    fn accept(&self, accept_value: Value) -> Result<Self, MagnusError> {
+        let mut new_client = self.clone();
+        
+        let accept_header = if let Some(sym) = Symbol::from_value(accept_value) {
+            match sym.name()?.as_str() {
+                "json" => "application/json",
+                "xml" => "application/xml",
+                "html" => "text/html",
+                "text" => "text/plain",
+                _ => return Err(MagnusError::new(exception::arg_error(), format!("Unknown accept type: {}", sym.name()?))),
+            }
+        } else {
+            &String::try_convert(accept_value)?
+        };
+        
+        new_client.headers.insert("accept".to_string(), accept_header.to_string());
+        Ok(new_client)
+    }
+
     fn get(&self, url: String) -> Result<RbHttpResponse, MagnusError> {
         execute_request(
             self.client.inner(),
@@ -754,6 +814,22 @@ fn rb_via(args: &[Value]) -> Result<RbHttpClient, MagnusError> {
     RbHttpClient::new()?.via(args)
 }
 
+fn rb_cookies(cookies_hash: RHash) -> Result<RbHttpClient, MagnusError> {
+    Ok(RbHttpClient::new()?.cookies(cookies_hash))
+}
+
+fn rb_basic_auth(auth_hash: RHash) -> Result<RbHttpClient, MagnusError> {
+    RbHttpClient::new()?.basic_auth(auth_hash)
+}
+
+fn rb_auth(auth_value: String) -> Result<RbHttpClient, MagnusError> {
+    Ok(RbHttpClient::new()?.auth(auth_value))
+}
+
+fn rb_accept(accept_value: Value) -> Result<RbHttpClient, MagnusError> {
+    RbHttpClient::new()?.accept(accept_value)
+}
+
 #[magnus::init]
 fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
     let wreq_module = ruby.define_module("Wreq")?;
@@ -790,6 +866,10 @@ fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
     client_class.define_method("timeout", method!(RbHttpClient::timeout, 1))?;
     client_class.define_method("with_proxy", method!(RbHttpClient::with_proxy, 1))?;
     client_class.define_method("via", method!(RbHttpClient::via, -1))?;
+    client_class.define_method("cookies", method!(RbHttpClient::cookies, 1))?;
+    client_class.define_method("basic_auth", method!(RbHttpClient::basic_auth, 1))?;
+    client_class.define_method("auth", method!(RbHttpClient::auth, 1))?;
+    client_class.define_method("accept", method!(RbHttpClient::accept, 1))?;
     client_class.define_method("get", method!(RbHttpClient::get, 1))?;
     client_class.define_method("post", method!(RbHttpClient::post, -1))?;
     client_class.define_method("put", method!(RbHttpClient::put, -1))?;
@@ -811,6 +891,10 @@ fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
     http_module.define_module_function("timeout", function!(rb_timeout, 1))?;
     http_module.define_module_function("proxy", function!(rb_proxy, 1))?;
     http_module.define_module_function("via", function!(rb_via, -1))?;
+    http_module.define_module_function("cookies", function!(rb_cookies, 1))?;
+    http_module.define_module_function("basic_auth", function!(rb_basic_auth, 1))?;
+    http_module.define_module_function("auth", function!(rb_auth, 1))?;
+    http_module.define_module_function("accept", function!(rb_accept, 1))?;
 
     Ok(())
 }

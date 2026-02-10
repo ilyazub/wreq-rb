@@ -762,7 +762,7 @@ Wave 3 (Polish — Sequential after Wave 2):
 
 ---
 
-- [ ] 6. Response Status object with predicates
+- [x] 6. Response Status object with predicates
 
   **What to do**:
 
