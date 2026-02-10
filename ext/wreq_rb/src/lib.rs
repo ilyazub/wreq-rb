@@ -15,6 +15,126 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::runtime::Runtime;
 
+#[magnus::wrap(class = "Wreq::HTTP::Status", free_immediately, size)]
+struct RbHttpStatus {
+    code: u16,
+}
+
+impl RbHttpStatus {
+    fn new(code: u16) -> Self {
+        Self { code }
+    }
+
+    fn to_i(&self) -> u16 {
+        self.code
+    }
+
+    fn to_s(&self) -> String {
+        format!("{} {}", self.code, self.reason())
+    }
+
+    fn reason(&self) -> &'static str {
+        match self.code {
+            100 => "Continue",
+            101 => "Switching Protocols",
+            102 => "Processing",
+            200 => "OK",
+            201 => "Created",
+            202 => "Accepted",
+            203 => "Non-Authoritative Information",
+            204 => "No Content",
+            205 => "Reset Content",
+            206 => "Partial Content",
+            207 => "Multi-Status",
+            208 => "Already Reported",
+            226 => "IM Used",
+            300 => "Multiple Choices",
+            301 => "Moved Permanently",
+            302 => "Found",
+            303 => "See Other",
+            304 => "Not Modified",
+            305 => "Use Proxy",
+            307 => "Temporary Redirect",
+            308 => "Permanent Redirect",
+            400 => "Bad Request",
+            401 => "Unauthorized",
+            402 => "Payment Required",
+            403 => "Forbidden",
+            404 => "Not Found",
+            405 => "Method Not Allowed",
+            406 => "Not Acceptable",
+            407 => "Proxy Authentication Required",
+            408 => "Request Timeout",
+            409 => "Conflict",
+            410 => "Gone",
+            411 => "Length Required",
+            412 => "Precondition Failed",
+            413 => "Payload Too Large",
+            414 => "URI Too Long",
+            415 => "Unsupported Media Type",
+            416 => "Range Not Satisfiable",
+            417 => "Expectation Failed",
+            418 => "I'm a teapot",
+            421 => "Misdirected Request",
+            422 => "Unprocessable Entity",
+            423 => "Locked",
+            424 => "Failed Dependency",
+            426 => "Upgrade Required",
+            428 => "Precondition Required",
+            429 => "Too Many Requests",
+            431 => "Request Header Fields Too Large",
+            451 => "Unavailable For Legal Reasons",
+            500 => "Internal Server Error",
+            501 => "Not Implemented",
+            502 => "Bad Gateway",
+            503 => "Service Unavailable",
+            504 => "Gateway Timeout",
+            505 => "HTTP Version Not Supported",
+            506 => "Variant Also Negotiates",
+            507 => "Insufficient Storage",
+            508 => "Loop Detected",
+            510 => "Not Extended",
+            511 => "Network Authentication Required",
+            _ => "Unknown Status",
+        }
+    }
+
+    fn success(&self) -> bool {
+        (200..300).contains(&self.code)
+    }
+
+    fn ok(&self) -> bool {
+        self.code == 200
+    }
+
+    fn redirect(&self) -> bool {
+        (300..400).contains(&self.code)
+    }
+
+    fn client_error(&self) -> bool {
+        (400..500).contains(&self.code)
+    }
+
+    fn server_error(&self) -> bool {
+        (500..600).contains(&self.code)
+    }
+
+    fn informational(&self) -> bool {
+        (100..200).contains(&self.code)
+    }
+
+    fn eq(&self, other: Value) -> Result<bool, MagnusError> {
+        if let Some(other_status) = RbHttpStatus::from_value(other) {
+            Ok(self.code == other_status.code)
+        } else if let Some(num) = other.try_convert::<u16>() {
+            Ok(self.code == num)
+        } else {
+            Ok(false)
+        }
+    }
+}
+
+
 // Fast random implementation similar to wreq-util crate
 fn fast_random() -> u64 {
     thread_local! {
@@ -639,6 +759,18 @@ fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
     let wreq_module = ruby.define_module("Wreq")?;
     let http_module = wreq_module.define_module("HTTP")?;
 
+    let status_class = http_module.define_class("Status", ruby.class_object())?;
+    status_class.define_method("to_i", method!(RbHttpStatus::to_i, 0))?;
+    status_class.define_method("to_s", method!(RbHttpStatus::to_s, 0))?;
+    status_class.define_method("reason", method!(RbHttpStatus::reason, 0))?;
+    status_class.define_method("success?", method!(RbHttpStatus::success, 0))?;
+    status_class.define_method("ok?", method!(RbHttpStatus::ok, 0))?;
+    status_class.define_method("redirect?", method!(RbHttpStatus::redirect, 0))?;
+    status_class.define_method("client_error?", method!(RbHttpStatus::client_error, 0))?;
+    status_class.define_method("server_error?", method!(RbHttpStatus::server_error, 0))?;
+    status_class.define_method("informational?", method!(RbHttpStatus::informational, 0))?;
+    status_class.define_method("==", method!(RbHttpStatus::eq, 1))?;
+
     let response_class = http_module.define_class("Response", ruby.class_object())?;
     response_class.define_method("status", method!(RbHttpResponse::status, 0))?;
     response_class.define_method("body", method!(RbHttpResponse::body, 0))?;
@@ -721,7 +853,7 @@ mod tests {
             .unwrap()
             .get("https://httpbin.org/get".to_string())
             .unwrap();
-        assert_eq!(response.status(), 200);
+        assert_eq!(response.status().to_i(), 200);
     }
 
     #[test]
@@ -760,7 +892,7 @@ mod tests {
             .unwrap()
             .delete("https://httpbin.org/delete".to_string())
             .unwrap();
-        assert_eq!(response.status(), 200);
+        assert_eq!(response.status().to_i(), 200);
     }
 
     #[test]
@@ -772,7 +904,7 @@ mod tests {
             .unwrap()
             .head("https://httpbin.org/get".to_string())
             .unwrap();
-        assert_eq!(response.status(), 200);
+        assert_eq!(response.status().to_i(), 200);
     }
 
     #[test]
@@ -792,7 +924,7 @@ mod tests {
         let client = RbHttpClient::new().unwrap();
         let response = client.get("https://httpbin.org/get".to_string()).unwrap();
 
-        assert_eq!(response.status(), 200);
+        assert_eq!(response.status().to_i(), 200);
         assert!(response.body().contains("httpbin.org"));
         assert!(response.headers().contains_key("content-type"));
         assert!(response.uri().contains("httpbin.org"));

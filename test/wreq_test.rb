@@ -330,4 +330,48 @@ class WreqTest < Minitest::Test
     response = Wreq::HTTP.via("proxy.example.com", 8080).headers(accept: "application/json").get("https://httpbin.org/get")
     assert_equal 200, response.status
   end
+
+  def test_status_object_success
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.get("https://httpbin.org/get")
+    assert_instance_of Wreq::HTTP::Status, response.status
+    assert_equal 200, response.status.to_i
+    assert_equal "200 OK", response.status.to_s
+    assert_equal "OK", response.status.reason
+    assert response.status.success?
+    assert response.status.ok?
+    refute response.status.redirect?
+    refute response.status.client_error?
+    refute response.status.server_error?
+  end
+
+  def test_status_equality
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.get("https://httpbin.org/get")
+    assert_equal 200, response.status
+    assert response.status == 200
+  end
+
+  def test_status_404
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.get("https://httpbin.org/status/404")
+    assert_equal 404, response.status.to_i
+    assert_equal "Not Found", response.status.reason
+    assert response.status.client_error?
+    refute response.status.success?
+  end
+
+  def test_status_redirect
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.follow(false).get("https://httpbin.org/redirect/1")
+    assert response.status.redirect?
+    refute response.status.success?
+  end
+
+  def test_code_backward_compat
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.get("https://httpbin.org/get")
+    assert_equal 200, response.code
+    assert_kind_of Integer, response.code
+  end
 end 
