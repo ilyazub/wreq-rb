@@ -15,7 +15,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::runtime::Runtime;
 
-// Fast random implementation similar to rquest-util crate
+// Fast random implementation similar to wreq-util crate
 fn fast_random() -> u64 {
     thread_local! {
         static RNG: Cell<Wrapping<u64>> = Cell::new(Wrapping(seed()));
@@ -330,11 +330,17 @@ impl RbHttpClient {
 
     fn follow(&self, follow: bool) -> Self {
         let mut new_client = self.clone();
-        new_client.redirect_policy = if follow {
-            Some(Policy::limited(10))
+        if follow {
+            new_client.redirect_policy = Some(Policy::limited(10));
         } else {
-            Some(Policy::none())
-        };
+            new_client.redirect_policy = Some(Policy::none());
+        }
+        new_client
+    }
+
+    fn timeout(&self, secs: u64) -> Self {
+        let mut new_client = self.clone();
+        new_client.timeout = secs;
         new_client
     }
 
@@ -601,6 +607,10 @@ fn rb_follow(follow: bool) -> Result<RbHttpClient, MagnusError> {
     Ok(RbHttpClient::new()?.follow(follow))
 }
 
+fn rb_timeout(secs: u64) -> Result<RbHttpClient, MagnusError> {
+    Ok(RbHttpClient::new()?.timeout(secs))
+}
+
 fn rb_proxy(proxy: String) -> Result<RbHttpClient, MagnusError> {
     RbHttpClient::new()?.with_proxy(proxy)
 }
@@ -626,6 +636,7 @@ fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
     client_class.define_singleton_method("new_mobile", function!(RbHttpClient::new_mobile, 0))?;
     client_class.define_method("with_headers", method!(RbHttpClient::with_headers, 1))?;
     client_class.define_method("follow", method!(RbHttpClient::follow, 1))?;
+    client_class.define_method("timeout", method!(RbHttpClient::timeout, 1))?;
     client_class.define_method("with_proxy", method!(RbHttpClient::with_proxy, 1))?;
     client_class.define_method("get", method!(RbHttpClient::get, 1))?;
     client_class.define_method("post", method!(RbHttpClient::post, -1))?;
@@ -645,6 +656,7 @@ fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
     http_module.define_module_function("patch", function!(rb_patch, -1))?;
     http_module.define_module_function("headers", function!(rb_headers, 1))?;
     http_module.define_module_function("follow", function!(rb_follow, 1))?;
+    http_module.define_module_function("timeout", function!(rb_timeout, 1))?;
     http_module.define_module_function("proxy", function!(rb_proxy, 1))?;
 
     Ok(())

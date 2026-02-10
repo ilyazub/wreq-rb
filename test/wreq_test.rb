@@ -300,4 +300,16 @@ class WreqTest < Minitest::Test
     assert(ja3_fingerprints.size > 1 || ja4_fingerprints.size > 1,
       "Expected fingerprint randomization, but got identical fingerprints across requests")
   end
+
+  def test_timeout_chainable
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.timeout(30).get("https://httpbin.org/get")
+    assert_equal 200, response.status
+  end
+
+  def test_timeout_with_headers
+    skip "requires httpbin.org access"
+    response = Wreq::HTTP.headers(accept: "application/json").timeout(10).get("https://httpbin.org/get")
+    assert_equal 200, response.status
+  end
 end 
