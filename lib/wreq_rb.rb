@@ -1,12 +1,20 @@
-require_relative "wreq_rb/version"
-require "json"
+require_relative 'wreq_rb/version'
+require 'json'
+
+# Load native extension first
+begin
+  RUBY_VERSION =~ /(\d+\.\d+)/
+  require "wreq/#{Regexp.last_match(1)}/wreq_rb"
+rescue LoadError
+  require 'wreq/wreq_rb'
+end
 
 module Wreq
   module HTTP
     class Response
       def parse
         ct = content_type
-        if ct && ct.include?("application/json")
+        if ct && ct.include?('application/json')
           JSON.parse(body)
         else
           body
@@ -19,28 +27,20 @@ module Wreq
 
       def cookies
         return {} unless headers
+
         cookies_hash = {}
         headers.each do |key, value|
-          if key.downcase == "set-cookie"
-            # Simple extraction: name=value
-            if value =~ /^([^=]+)=([^;]+)/
-              cookies_hash[$1] = $2
-            end
-          end
+          next unless key.downcase == 'set-cookie'
+
+          # Simple extraction: name=value
+          cookies_hash[::Regexp.last_match(1)] = ::Regexp.last_match(2) if value =~ /^([^=]+)=([^;]+)/
         end
         cookies_hash
       end
     end
 
     class << self
-      alias_method :through, :via
+      alias through via
     end
   end
 end
-
-begin
-  RUBY_VERSION =~ /(\d+\.\d+)/
-  require "wreq/#{Regexp.last_match(1)}/wreq_rb"
-rescue LoadError
-  require "wreq/wreq_rb"
-end 
