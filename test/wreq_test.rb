@@ -312,4 +312,22 @@ class WreqTest < Minitest::Test
     response = Wreq::HTTP.headers(accept: "application/json").timeout(10).get("https://httpbin.org/get")
     assert_equal 200, response.status
   end
+
+  def test_via_with_host_and_port
+    skip "requires proxy server"
+    response = Wreq::HTTP.via("proxy.example.com", 8080).get("https://httpbin.org/get")
+    assert_equal 200, response.status
+  end
+
+  def test_via_with_auth
+    skip "requires proxy server with auth"
+    response = Wreq::HTTP.via("proxy.example.com", 8080, "user", "pass").get("https://httpbin.org/get")
+    assert_equal 200, response.status
+  end
+
+  def test_via_chainable
+    skip "requires proxy server"
+    response = Wreq::HTTP.via("proxy.example.com", 8080).headers(accept: "application/json").get("https://httpbin.org/get")
+    assert_equal 200, response.status
+  end
 end 

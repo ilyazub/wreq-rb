@@ -680,7 +680,7 @@ Wave 3 (Polish — Sequential after Wave 2):
 
 ---
 
-- [ ] 5. Chainable .timeout()
+- [x] 5. Chainable .timeout()
 
   **What to do**:
 

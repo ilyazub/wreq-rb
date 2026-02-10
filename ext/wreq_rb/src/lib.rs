@@ -344,6 +344,21 @@ impl RbHttpClient {
         new_client
     }
 
+    fn via(&self, args: &[Value]) -> Result<Self, MagnusError> {
+        let host = String::try_convert(args[0])?;
+        let port = u16::try_convert(args[1])?;
+        
+        let proxy_url = if args.len() >= 4 {
+            let user = String::try_convert(args[2])?;
+            let pass = String::try_convert(args[3])?;
+            format!("http://{}:{}@{}:{}", user, pass, host, port)
+        } else {
+            format!("http://{}:{}", host, port)
+        };
+        
+        self.with_proxy(proxy_url)
+    }
+
     fn get(&self, url: String) -> Result<RbHttpResponse, MagnusError> {
         execute_request(
             self.client.inner(),
@@ -615,6 +630,10 @@ fn rb_proxy(proxy: String) -> Result<RbHttpClient, MagnusError> {
     RbHttpClient::new()?.with_proxy(proxy)
 }
 
+fn rb_via(args: &[Value]) -> Result<RbHttpClient, MagnusError> {
+    RbHttpClient::new()?.via(args)
+}
+
 #[magnus::init]
 fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
     let wreq_module = ruby.define_module("Wreq")?;
@@ -638,6 +657,7 @@ fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
     client_class.define_method("follow", method!(RbHttpClient::follow, 1))?;
     client_class.define_method("timeout", method!(RbHttpClient::timeout, 1))?;
     client_class.define_method("with_proxy", method!(RbHttpClient::with_proxy, 1))?;
+    client_class.define_method("via", method!(RbHttpClient::via, -1))?;
     client_class.define_method("get", method!(RbHttpClient::get, 1))?;
     client_class.define_method("post", method!(RbHttpClient::post, -1))?;
     client_class.define_method("put", method!(RbHttpClient::put, -1))?;
@@ -658,6 +678,7 @@ fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
     http_module.define_module_function("follow", function!(rb_follow, 1))?;
     http_module.define_module_function("timeout", function!(rb_timeout, 1))?;
     http_module.define_module_function("proxy", function!(rb_proxy, 1))?;
+    http_module.define_module_function("via", function!(rb_via, -1))?;
 
     Ok(())
 }
