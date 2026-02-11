@@ -47,7 +47,7 @@ class WreqTest < Minitest::Test
     cookie = 'cookie1=value1; cookie2=value2'
     client_with_cookies = HTTP.headers({ 'Cookie' => cookie })
 
-    response = client_with_cookies.get('https://httpbin.org/cookies')
+    response = client_with_cookies.get('https://httpbingo.org/cookies')
     assert_equal(200, response.status)
 
     data = JSON.parse(response.body)
@@ -134,7 +134,7 @@ class WreqTest < Minitest::Test
 
   def test_post_request
     response = HTTP.post(
-      'https://httpbin.org/post',
+      'https://httpbingo.org/post',
       body: 'test body'
     )
 
@@ -144,20 +144,20 @@ class WreqTest < Minitest::Test
   end
 
   def test_persistent_basic
-    client = HTTP.persistent('https://httpbin.org')
+    client = HTTP.persistent('https://httpbingo.org')
     response = client.get('/get')
     assert_equal(200, response.status)
   end
 
   def test_persistent_block_form
-    result = HTTP.persistent('https://httpbin.org') do |http|
+    result = HTTP.persistent('https://httpbingo.org') do |http|
       http.get('/get')
     end
     assert_equal(200, result.status)
   end
 
   def test_persistent_relative_urls
-    client = HTTP.persistent('https://httpbin.org')
+    client = HTTP.persistent('https://httpbingo.org')
     r1 = client.get('/get')
     r2 = client.get('/ip')
     assert_equal(200, r1.status)
@@ -165,19 +165,19 @@ class WreqTest < Minitest::Test
   end
 
   def test_persistent_close
-    client = HTTP.persistent('https://httpbin.org')
+    client = HTTP.persistent('https://httpbingo.org')
     client.close
     assert_raises(RuntimeError) { client.get('/get') }
   end
 
   def test_persistent_timeout_option
-    client = HTTP.persistent('https://httpbin.org', timeout: 30)
+    client = HTTP.persistent('https://httpbingo.org', timeout: 30)
     response = client.get('/get')
     assert_equal(200, response.status)
   end
 
   def test_persistent_multiple_requests
-    client = HTTP.persistent('https://httpbin.org')
+    client = HTTP.persistent('https://httpbingo.org')
     5.times do
       response = client.get('/get')
       assert_equal(200, response.status)
@@ -188,7 +188,7 @@ class WreqTest < Minitest::Test
     response = HTTP
                .headers(content_type: 'application/json')
                .post(
-                 'https://httpbin.org/post',
+                 'https://httpbingo.org/post',
                  body: JSON.generate({ name: 'test', value: 123 })
                )
 
@@ -199,7 +199,7 @@ class WreqTest < Minitest::Test
 
   def test_put_request
     response = HTTP.put(
-      'https://httpbin.org/put',
+      'https://httpbingo.org/put',
       body: 'updated content'
     )
 
@@ -209,19 +209,19 @@ class WreqTest < Minitest::Test
   end
 
   def test_delete_request
-    response = HTTP.delete('https://httpbin.org/delete')
+    response = HTTP.delete('https://httpbingo.org/delete')
     assert_equal(200, response.status)
   end
 
   def test_head_request
-    response = HTTP.head('https://httpbin.org/get')
+    response = HTTP.head('https://httpbingo.org/get')
     assert_equal(200, response.status)
     assert_empty(response.body)
   end
 
   def test_patch_request
     response = HTTP.patch(
-      'https://httpbin.org/patch',
+      'https://httpbingo.org/patch',
       body: 'patched content'
     )
 
@@ -233,19 +233,19 @@ class WreqTest < Minitest::Test
   def test_follow_redirects
     response = HTTP
                .follow(true)
-               .get('https://httpbin.org/redirect/1')
+               .get('https://httpbingo.org/redirect/1')
 
     assert_equal(200, response.status)
-    assert_equal('https://httpbin.org/get', response.uri)
+    assert_equal('https://httpbingo.org/get', response.uri)
   end
 
   def test_no_follow_redirects
     response = HTTP
                .follow(false)
-               .get('https://httpbin.org/redirect/1')
+               .get('https://httpbingo.org/redirect/1')
 
     assert_equal(302, response.status)
-    assert_equal('https://httpbin.org/redirect/1', response.uri)
+    assert_equal('https://httpbingo.org/redirect/1', response.uri)
   end
 
   def test_response_methods
@@ -268,7 +268,7 @@ class WreqTest < Minitest::Test
     assert_equal('application/json', response.content_type)
 
     # Test with a response that has charset
-    charset_response = HTTP.get('https://httpbin.org/html')
+    charset_response = HTTP.get('https://httpbingo.org/html')
     assert_kind_of(String, charset_response.content_type)
     assert_includes(charset_response.content_type.to_s.downcase, 'text/html')
 
@@ -340,35 +340,35 @@ class WreqTest < Minitest::Test
   end
 
   def test_timeout_chainable
-    response = Wreq::HTTP.timeout(30).get('https://httpbin.org/get')
+    response = Wreq::HTTP.timeout(30).get('https://httpbingo.org/get')
     assert_equal 200, response.status
   end
 
   def test_timeout_with_headers
-    response = Wreq::HTTP.headers(accept: 'application/json').timeout(10).get('https://httpbin.org/get')
+    response = Wreq::HTTP.headers(accept: 'application/json').timeout(10).get('https://httpbingo.org/get')
     assert_equal 200, response.status
   end
 
   def test_via_with_host_and_port
     skip 'requires proxy server'
-    response = Wreq::HTTP.via('proxy.example.com', 8080).get('https://httpbin.org/get')
+    response = Wreq::HTTP.via('proxy.example.com', 8080).get('https://httpbingo.org/get')
     assert_equal 200, response.status
   end
 
   def test_via_with_auth
     skip 'requires proxy server with auth'
-    response = Wreq::HTTP.via('proxy.example.com', 8080, 'user', 'pass').get('https://httpbin.org/get')
+    response = Wreq::HTTP.via('proxy.example.com', 8080, 'user', 'pass').get('https://httpbingo.org/get')
     assert_equal 200, response.status
   end
 
   def test_via_chainable
     skip 'requires proxy server'
-    response = Wreq::HTTP.via('proxy.example.com', 8080).headers(accept: 'application/json').get('https://httpbin.org/get')
+    response = Wreq::HTTP.via('proxy.example.com', 8080).headers(accept: 'application/json').get('https://httpbingo.org/get')
     assert_equal 200, response.status
   end
 
   def test_status_object_success
-    response = Wreq::HTTP.get('https://httpbin.org/get')
+    response = Wreq::HTTP.get('https://httpbingo.org/get')
     assert_instance_of Wreq::HTTP::Status, response.status
     assert_equal 200, response.status.to_i
     assert_equal '200 OK', response.status.to_s
@@ -381,13 +381,13 @@ class WreqTest < Minitest::Test
   end
 
   def test_status_equality
-    response = Wreq::HTTP.get('https://httpbin.org/get')
+    response = Wreq::HTTP.get('https://httpbingo.org/get')
     assert_equal 200, response.status
     assert response.status == 200
   end
 
   def test_status_404
-    response = Wreq::HTTP.get('https://httpbin.org/status/404')
+    response = Wreq::HTTP.get('https://httpbingo.org/status/404')
     assert_equal 404, response.status.to_i
     assert_equal 'Not Found', response.status.reason
     assert response.status.client_error?
@@ -395,40 +395,40 @@ class WreqTest < Minitest::Test
   end
 
   def test_status_redirect
-    response = Wreq::HTTP.follow(false).get('https://httpbin.org/redirect/1')
+    response = Wreq::HTTP.follow(false).get('https://httpbingo.org/redirect/1')
     assert response.status.redirect?
     refute response.status.success?
   end
 
   def test_code_backward_compat
-    response = Wreq::HTTP.get('https://httpbin.org/get')
+    response = Wreq::HTTP.get('https://httpbingo.org/get')
     assert_equal 200, response.code
     assert_kind_of Integer, response.code
   end
 
   def test_cookies
-    response = Wreq::HTTP.cookies(session: 'abc123', user: 'test').get('https://httpbin.org/cookies')
+    response = Wreq::HTTP.cookies(session: 'abc123', user: 'test').get('https://httpbingo.org/cookies')
     assert_equal 200, response.status.to_i
     assert response.body.include?('abc123')
   end
 
   def test_basic_auth
-    response = Wreq::HTTP.basic_auth(user: 'user', pass: 'passwd').get('https://httpbin.org/basic-auth/user/passwd')
+    response = Wreq::HTTP.basic_auth(user: 'user', pass: 'passwd').get('https://httpbingo.org/basic-auth/user/passwd')
     assert_equal 200, response.status.to_i
   end
 
   def test_auth_bearer
-    response = Wreq::HTTP.auth('Bearer test-token').get('https://httpbin.org/bearer')
+    response = Wreq::HTTP.auth('Bearer test-token').get('https://httpbingo.org/bearer')
     assert_equal 401, response.status.to_i
   end
 
   def test_accept_symbol
-    response = Wreq::HTTP.accept(:json).get('https://httpbin.org/get')
+    response = Wreq::HTTP.accept(:json).get('https://httpbingo.org/get')
     assert_equal 200, response.status.to_i
   end
 
   def test_accept_string
-    response = Wreq::HTTP.accept('text/html').get('https://httpbin.org/html')
+    response = Wreq::HTTP.accept('text/html').get('https://httpbingo.org/html')
     assert_equal 200, response.status.to_i
   end
 
@@ -437,58 +437,58 @@ class WreqTest < Minitest::Test
                .cookies(session: 'test')
                .headers(x_custom: 'value')
                .accept(:json)
-               .get('https://httpbin.org/get')
+               .get('https://httpbingo.org/get')
     assert_equal 200, response.status.to_i
   end
 
   def test_parse_json
-    response = Wreq::HTTP.get('https://httpbin.org/get')
+    response = Wreq::HTTP.get('https://httpbingo.org/get')
     parsed = response.parse
     assert_instance_of Hash, parsed
     assert parsed.key?('url')
   end
 
   def test_parse_non_json
-    response = Wreq::HTTP.get('https://httpbin.org/html')
+    response = Wreq::HTTP.get('https://httpbingo.org/html')
     parsed = response.parse
     assert_instance_of String, parsed
     assert parsed.include?('<html>')
   end
 
   def test_flush
-    response = Wreq::HTTP.get('https://httpbin.org/get')
+    response = Wreq::HTTP.get('https://httpbingo.org/get')
     flushed = response.flush
     assert_equal response, flushed
   end
 
   def test_body_backward_compat
-    response = Wreq::HTTP.get('https://httpbin.org/get')
+    response = Wreq::HTTP.get('https://httpbingo.org/get')
     assert_instance_of String, response.body
     assert response.body.length > 0
   end
 
   def test_follow_default
-    response = Wreq::HTTP.follow.get('https://httpbin.org/redirect/1')
+    response = Wreq::HTTP.follow.get('https://httpbingo.org/redirect/1')
     assert_equal 200, response.status.to_i
   end
 
   def test_follow_with_max_hops
-    response = Wreq::HTTP.follow(max_hops: 5).get('https://httpbin.org/redirect/3')
+    response = Wreq::HTTP.follow(max_hops: 5).get('https://httpbingo.org/redirect/3')
     assert_equal 200, response.status.to_i
   end
 
   def test_follow_true_backward_compat
-    response = Wreq::HTTP.follow(true).get('https://httpbin.org/redirect/1')
+    response = Wreq::HTTP.follow(true).get('https://httpbingo.org/redirect/1')
     assert_equal 200, response.status.to_i
   end
 
   def test_follow_false_backward_compat
-    response = Wreq::HTTP.follow(false).get('https://httpbin.org/redirect/1')
+    response = Wreq::HTTP.follow(false).get('https://httpbingo.org/redirect/1')
     assert response.status.redirect?
   end
 
   def test_post_with_json_option
-    response = HTTP.post('https://httpbin.org/post', json: { name: 'test', value: 123 })
+    response = HTTP.post('https://httpbingo.org/post', json: { name: 'test', value: 123 })
     assert_equal 200, response.code
     body = JSON.parse(response.body)
     assert_equal 'test', body['json']['name']
@@ -497,7 +497,7 @@ class WreqTest < Minitest::Test
   end
 
   def test_post_with_form_option
-    response = HTTP.post('https://httpbin.org/post', form: { name: 'test', email: 'a@b.com' })
+    response = HTTP.post('https://httpbingo.org/post', form: { name: 'test', email: 'a@b.com' })
     assert_equal 200, response.code
     body = JSON.parse(response.body)
     assert_equal 'test', body['form']['name']
@@ -506,14 +506,14 @@ class WreqTest < Minitest::Test
   end
 
   def test_post_with_body_option_backward_compat
-    response = HTTP.post('https://httpbin.org/post', body: 'raw string data')
+    response = HTTP.post('https://httpbingo.org/post', body: 'raw string data')
     assert_equal 200, response.code
     body = JSON.parse(response.body)
     assert_equal 'raw string data', body['data']
   end
 
   def test_get_with_params_option
-    response = HTTP.get('https://httpbin.org/get', params: { q: 'search', page: '2' })
+    response = HTTP.get('https://httpbingo.org/get', params: { q: 'search', page: '2' })
     assert_equal 200, response.code
     body = JSON.parse(response.body)
     assert_equal 'search', body['args']['q']
@@ -521,12 +521,12 @@ class WreqTest < Minitest::Test
   end
 
   def test_request_method_get
-    response = HTTP.request(:get, 'https://httpbin.org/get')
+    response = HTTP.request(:get, 'https://httpbingo.org/get')
     assert_equal 200, response.code
   end
 
   def test_request_method_post_with_json
-    response = HTTP.request(:post, 'https://httpbin.org/post', json: { a: 1 })
+    response = HTTP.request(:post, 'https://httpbingo.org/post', json: { a: 1 })
     assert_equal 200, response.code
     body = JSON.parse(response.body)
     assert_equal 1, body['json']['a']
@@ -534,12 +534,12 @@ class WreqTest < Minitest::Test
 
   def test_request_method_invalid_verb
     assert_raises(ArgumentError) do
-      HTTP.request(:invalid, 'https://httpbin.org/get')
+      HTTP.request(:invalid, 'https://httpbingo.org/get')
     end
   end
 
   def test_chainable_with_params
-    response = HTTP.headers(accept: 'application/json').get('https://httpbin.org/get', params: { test: 'value' })
+    response = HTTP.headers(accept: 'application/json').get('https://httpbingo.org/get', params: { test: 'value' })
     assert_equal 200, response.code
     body = JSON.parse(response.body)
     assert_equal 'value', body['args']['test']
@@ -548,72 +548,72 @@ class WreqTest < Minitest::Test
 
   def test_encoding_chainable
     skip 'requires network'
-    response = HTTP.encoding('UTF-8').get('https://httpbin.org/get')
+    response = HTTP.encoding('UTF-8').get('https://httpbingo.org/get')
     assert_equal 200, response.code
   end
 
   def test_cookies_parsing
     skip 'requires network'
-    response = HTTP.get('https://httpbin.org/cookies/set?test_cookie=test_value')
+    response = HTTP.get('https://httpbingo.org/cookies/set?test_cookie=test_value')
     cookies = response.cookies
     assert_instance_of Hash, cookies
   end
 
   def test_cookies_empty
     skip 'requires network'
-    response = HTTP.get('https://httpbin.org/get')
+    response = HTTP.get('https://httpbingo.org/get')
     cookies = response.cookies
     assert_instance_of Hash, cookies
   end
 
   def test_encoding_applied_to_response
     skip 'requires network'
-    response = HTTP.encoding('UTF-8').get('https://httpbin.org/get')
+    response = HTTP.encoding('UTF-8').get('https://httpbingo.org/get')
     assert_equal 200, response.status
     body = JSON.parse(response.body)
     assert_instance_of Hash, body
   end
 
   def test_status_predicates_404
-    response = HTTP.get('https://httpbin.org/status/404')
+    response = HTTP.get('https://httpbingo.org/status/404')
     assert response.status.client_error?
     refute response.status.success?
   end
 
   def test_status_predicates_500
-    response = HTTP.get('https://httpbin.org/status/500')
+    response = HTTP.get('https://httpbingo.org/status/500')
     assert response.status.server_error?
     refute response.status.success?
   end
 
   def test_status_predicates_302
-    response = HTTP.follow(false).get('https://httpbin.org/redirect/1')
+    response = HTTP.follow(false).get('https://httpbingo.org/redirect/1')
     assert response.status.redirect?
     refute response.status.success?
   end
 
   def test_response_parse_json_auto
-    response = HTTP.get('https://httpbin.org/get')
+    response = HTTP.get('https://httpbingo.org/get')
     parsed = response.parse
     assert_instance_of Hash, parsed
-    assert_equal 'https://httpbin.org/get', parsed['url']
+    assert_equal 'https://httpbingo.org/get', parsed['url']
   end
 
   def test_response_parse_non_json_fallback
-    response = HTTP.get('https://httpbin.org/html')
+    response = HTTP.get('https://httpbingo.org/html')
     parsed = response.parse
     assert_instance_of String, parsed
     assert_includes parsed, '<html>'
   end
 
   def test_response_cookies_parsing_set_cookie
-    response = HTTP.follow(false).get('https://httpbin.org/cookies/set?test_cookie=test_value')
+    response = HTTP.follow(false).get('https://httpbingo.org/cookies/set?test_cookie=test_value')
     assert response.status.redirect?
     assert_equal 'test_value', response.cookies['test_cookie']
   end
 
   def test_response_cookies_empty
-    response = HTTP.get('https://httpbin.org/get')
+    response = HTTP.get('https://httpbingo.org/get')
     cookies = response.cookies
     assert_instance_of Hash, cookies
     assert_empty cookies
@@ -626,7 +626,7 @@ class WreqTest < Minitest::Test
                .follow(max_hops: 5)
                .cookies(session: 'abc')
                .accept(:json)
-               .get('https://httpbin.org/get', params: { q: 'test' })
+               .get('https://httpbingo.org/get', params: { q: 'test' })
 
     parsed = response.parse
     assert_equal 'test', parsed['args']['q']
@@ -636,14 +636,14 @@ class WreqTest < Minitest::Test
   end
 
   def test_basic_auth_success
-    response = HTTP.basic_auth(user: 'user', pass: 'passwd').get('https://httpbin.org/basic-auth/user/passwd')
+    response = HTTP.basic_auth(user: 'user', pass: 'passwd').get('https://httpbingo.org/basic-auth/user/passwd')
     assert response.status.ok?
     parsed = response.parse
     assert_equal true, parsed['authenticated']
   end
 
   def test_auth_bearer_success
-    response = HTTP.auth('Bearer test-token').get('https://httpbin.org/bearer')
+    response = HTTP.auth('Bearer test-token').get('https://httpbingo.org/bearer')
     assert response.status.ok?
     parsed = response.parse
     assert_equal 'test-token', parsed['token']
@@ -651,7 +651,7 @@ class WreqTest < Minitest::Test
 
   def test_timeout_raises
     assert_raises(RuntimeError) do
-      HTTP.timeout(0.001).get('https://httpbin.org/delay/10')
+      HTTP.timeout(0.001).get('https://httpbingo.org/delay/10')
     end
   end
 
@@ -668,7 +668,7 @@ class WreqTest < Minitest::Test
     threads = Array.new(5) do
       Thread.new do
         2.times do
-          response = HTTP.get('https://httpbin.org/get', params: { t: Thread.current.object_id })
+          response = HTTP.get('https://httpbingo.org/get', params: { t: Thread.current.object_id })
           responses << response.code
         end
       rescue StandardError => e
@@ -687,7 +687,7 @@ class WreqTest < Minitest::Test
   end
 
   def test_put_with_json_option
-    response = HTTP.put('https://httpbin.org/put', json: { name: 'put-test', value: 7 })
+    response = HTTP.put('https://httpbingo.org/put', json: { name: 'put-test', value: 7 })
     assert response.status.ok?
     body = response.parse
     assert_equal 'put-test', body['json']['name']
@@ -695,7 +695,7 @@ class WreqTest < Minitest::Test
   end
 
   def test_patch_with_form_option
-    response = HTTP.patch('https://httpbin.org/patch', form: { name: 'patch-test', value: 'ok' })
+    response = HTTP.patch('https://httpbingo.org/patch', form: { name: 'patch-test', value: 'ok' })
     assert response.status.ok?
     body = response.parse
     assert_equal 'patch-test', body['form']['name']
@@ -703,7 +703,7 @@ class WreqTest < Minitest::Test
   end
 
   def test_request_method_delete_with_params
-    response = HTTP.request(:delete, 'https://httpbin.org/delete', params: { reason: 'cleanup' })
+    response = HTTP.request(:delete, 'https://httpbingo.org/delete', params: { reason: 'cleanup' })
     assert response.status.ok?
     body = response.parse
     assert_equal 'cleanup', body['args']['reason']
