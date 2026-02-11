@@ -340,13 +340,11 @@ class WreqTest < Minitest::Test
   end
 
   def test_timeout_chainable
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.timeout(30).get('https://httpbin.org/get')
     assert_equal 200, response.status
   end
 
   def test_timeout_with_headers
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.headers(accept: 'application/json').timeout(10).get('https://httpbin.org/get')
     assert_equal 200, response.status
   end
@@ -370,7 +368,6 @@ class WreqTest < Minitest::Test
   end
 
   def test_status_object_success
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.get('https://httpbin.org/get')
     assert_instance_of Wreq::HTTP::Status, response.status
     assert_equal 200, response.status.to_i
@@ -384,14 +381,12 @@ class WreqTest < Minitest::Test
   end
 
   def test_status_equality
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.get('https://httpbin.org/get')
     assert_equal 200, response.status
     assert response.status == 200
   end
 
   def test_status_404
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.get('https://httpbin.org/status/404')
     assert_equal 404, response.status.to_i
     assert_equal 'Not Found', response.status.reason
@@ -400,52 +395,44 @@ class WreqTest < Minitest::Test
   end
 
   def test_status_redirect
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.follow(false).get('https://httpbin.org/redirect/1')
     assert response.status.redirect?
     refute response.status.success?
   end
 
   def test_code_backward_compat
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.get('https://httpbin.org/get')
     assert_equal 200, response.code
     assert_kind_of Integer, response.code
   end
 
   def test_cookies
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.cookies(session: 'abc123', user: 'test').get('https://httpbin.org/cookies')
     assert_equal 200, response.status.to_i
     assert response.body.include?('abc123')
   end
 
   def test_basic_auth
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.basic_auth(user: 'user', pass: 'passwd').get('https://httpbin.org/basic-auth/user/passwd')
     assert_equal 200, response.status.to_i
   end
 
   def test_auth_bearer
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.auth('Bearer test-token').get('https://httpbin.org/bearer')
     assert_equal 401, response.status.to_i
   end
 
   def test_accept_symbol
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.accept(:json).get('https://httpbin.org/get')
     assert_equal 200, response.status.to_i
   end
 
   def test_accept_string
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.accept('text/html').get('https://httpbin.org/html')
     assert_equal 200, response.status.to_i
   end
 
   def test_chainable_auth_methods
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP
                .cookies(session: 'test')
                .headers(x_custom: 'value')
@@ -455,7 +442,6 @@ class WreqTest < Minitest::Test
   end
 
   def test_parse_json
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.get('https://httpbin.org/get')
     parsed = response.parse
     assert_instance_of Hash, parsed
@@ -463,7 +449,6 @@ class WreqTest < Minitest::Test
   end
 
   def test_parse_non_json
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.get('https://httpbin.org/html')
     parsed = response.parse
     assert_instance_of String, parsed
@@ -471,45 +456,38 @@ class WreqTest < Minitest::Test
   end
 
   def test_flush
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.get('https://httpbin.org/get')
     flushed = response.flush
     assert_equal response, flushed
   end
 
   def test_body_backward_compat
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.get('https://httpbin.org/get')
     assert_instance_of String, response.body
     assert response.body.length > 0
   end
 
   def test_follow_default
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.follow.get('https://httpbin.org/redirect/1')
     assert_equal 200, response.status.to_i
   end
 
   def test_follow_with_max_hops
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.follow(max_hops: 5).get('https://httpbin.org/redirect/3')
     assert_equal 200, response.status.to_i
   end
 
   def test_follow_true_backward_compat
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.follow(true).get('https://httpbin.org/redirect/1')
     assert_equal 200, response.status.to_i
   end
 
   def test_follow_false_backward_compat
-    skip 'requires httpbin.org access'
     response = Wreq::HTTP.follow(false).get('https://httpbin.org/redirect/1')
     assert response.status.redirect?
   end
 
   def test_post_with_json_option
-    skip 'requires httpbin.org access'
     response = HTTP.post('https://httpbin.org/post', json: { name: 'test', value: 123 })
     assert_equal 200, response.code
     body = JSON.parse(response.body)
@@ -519,7 +497,6 @@ class WreqTest < Minitest::Test
   end
 
   def test_post_with_form_option
-    skip 'requires httpbin.org access'
     response = HTTP.post('https://httpbin.org/post', form: { name: 'test', email: 'a@b.com' })
     assert_equal 200, response.code
     body = JSON.parse(response.body)
@@ -529,7 +506,6 @@ class WreqTest < Minitest::Test
   end
 
   def test_post_with_body_option_backward_compat
-    skip 'requires httpbin.org access'
     response = HTTP.post('https://httpbin.org/post', body: 'raw string data')
     assert_equal 200, response.code
     body = JSON.parse(response.body)
@@ -537,7 +513,6 @@ class WreqTest < Minitest::Test
   end
 
   def test_get_with_params_option
-    skip 'requires httpbin.org access'
     response = HTTP.get('https://httpbin.org/get', params: { q: 'search', page: '2' })
     assert_equal 200, response.code
     body = JSON.parse(response.body)
@@ -546,13 +521,11 @@ class WreqTest < Minitest::Test
   end
 
   def test_request_method_get
-    skip 'requires httpbin.org access'
     response = HTTP.request(:get, 'https://httpbin.org/get')
     assert_equal 200, response.code
   end
 
   def test_request_method_post_with_json
-    skip 'requires httpbin.org access'
     response = HTTP.request(:post, 'https://httpbin.org/post', json: { a: 1 })
     assert_equal 200, response.code
     body = JSON.parse(response.body)
@@ -566,7 +539,6 @@ class WreqTest < Minitest::Test
   end
 
   def test_chainable_with_params
-    skip 'requires httpbin.org access'
     response = HTTP.headers(accept: 'application/json').get('https://httpbin.org/get', params: { test: 'value' })
     assert_equal 200, response.code
     body = JSON.parse(response.body)
