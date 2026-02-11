@@ -13,6 +13,7 @@ use std::collections::hash_map::RandomState;
 use std::hash::{BuildHasher, Hasher};
 use std::num::Wrapping;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use tokio::runtime::Runtime;
 use url::Url;
@@ -398,7 +399,7 @@ struct RbHttpClient {
     accept_type: Option<String>,
     encoding: Option<String>,
     base_url: Option<String>,
-    closed: Cell<bool>,
+    closed: AtomicBool,
 }
 
 impl RbHttpClient {
@@ -425,7 +426,7 @@ impl RbHttpClient {
             accept_type: None,
             encoding: None,
             base_url: None,
-            closed: Cell::new(false),
+            closed: AtomicBool::new(false),
         })
     }
 
@@ -452,7 +453,7 @@ impl RbHttpClient {
             accept_type: None,
             encoding: None,
             base_url: None,
-            closed: Cell::new(false),
+            closed: AtomicBool::new(false),
         })
     }
 
@@ -479,12 +480,12 @@ impl RbHttpClient {
             accept_type: None,
             encoding: None,
             base_url: None,
-            closed: Cell::new(false),
+            closed: AtomicBool::new(false),
         })
     }
 
     fn ensure_open(&self) -> Result<(), MagnusError> {
-        if self.closed.get() {
+        if self.closed.load(Ordering::SeqCst) {
             return Err(MagnusError::new(
                 exception::runtime_error(),
                 "HTTP client is closed",
@@ -615,7 +616,7 @@ impl RbHttpClient {
     }
 
     fn close(&self) {
-        self.closed.set(true);
+        self.closed.store(true, Ordering::SeqCst);
     }
 
     fn timeout(&self, secs: f64) -> Self {
@@ -893,7 +894,7 @@ impl Clone for RbHttpClient {
             accept_type: self.accept_type.clone(),
             encoding: self.encoding.clone(),
             base_url: self.base_url.clone(),
-            closed: Cell::new(self.closed.get()),
+            closed: AtomicBool::new(self.closed.load(Ordering::Relaxed)),
         }
     }
 }
