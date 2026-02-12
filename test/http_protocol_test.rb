@@ -269,8 +269,8 @@ class HttpProtocolTest < Minitest::Test
   end
 
   def test_options_request
-    # OPTIONS method not supported in wreq, skip this test
-    skip 'OPTIONS method not supported'
+    response = HTTP.request(:options, 'https://httpbingo.org/get')
+    assert_includes [200, 204], response.status.to_i
   end
 
   def test_put_request_with_body

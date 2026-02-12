@@ -240,6 +240,7 @@ enum HttpMethod {
     Delete,
     Head,
     Patch,
+    Options,
 }
 
 fn execute_request(
@@ -262,6 +263,7 @@ fn execute_request(
         HttpMethod::Delete => client.delete(url),
         HttpMethod::Head => client.head(url),
         HttpMethod::Patch => client.patch(url),
+        HttpMethod::Options => client.options(url),
     };
 
     // Pre-allocate HeaderMap with capacity (headers + 3 defaults: accept, user-agent, content-type)
@@ -834,6 +836,7 @@ impl RbHttpClient {
             "delete" => HttpMethod::Delete,
             "head" => HttpMethod::Head,
             "patch" => HttpMethod::Patch,
+            "options" => HttpMethod::Options,
             _ => return Err(MagnusError::new(exception::arg_error(), "Invalid HTTP verb")),
         };
         
