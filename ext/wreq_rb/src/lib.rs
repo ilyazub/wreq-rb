@@ -1211,6 +1211,108 @@ fn rb_accept(accept_value: Value) -> Result<RbHttpClient, MagnusError> {
     RbHttpClient::new()?.accept(accept_value)
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn rb_response_status(self_val: VALUE) -> VALUE {
+    ffi_guard!({
+        let response_ptr = unwrap_response(self_val);
+        let response = &*response_ptr;
+        let status = response.status();
+        rb_int2inum(status as isize)
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_response_code(self_val: VALUE) -> VALUE {
+    ffi_guard!({
+        let response_ptr = unwrap_response(self_val);
+        let response = &*response_ptr;
+        let code = response.code();
+        rb_int2inum(code as isize)
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_response_body(self_val: VALUE) -> VALUE {
+    ffi_guard!({
+        let response_ptr = unwrap_response(self_val);
+        let response = &*response_ptr;
+        let body = response.body();
+        let c_str = std::ffi::CString::new(body).unwrap_or_default();
+        rb_str_new_cstr(c_str.as_ptr())
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_response_to_s(self_val: VALUE) -> VALUE {
+    ffi_guard!({
+        let response_ptr = unwrap_response(self_val);
+        let response = &*response_ptr;
+        let s = response.to_s();
+        let c_str = std::ffi::CString::new(s).unwrap_or_default();
+        rb_str_new_cstr(c_str.as_ptr())
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_response_uri(self_val: VALUE) -> VALUE {
+    ffi_guard!({
+        let response_ptr = unwrap_response(self_val);
+        let response = &*response_ptr;
+        let uri = response.uri();
+        let c_str = std::ffi::CString::new(uri).unwrap_or_default();
+        rb_str_new_cstr(c_str.as_ptr())
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_response_content_type(self_val: VALUE) -> VALUE {
+    ffi_guard!({
+        let response_ptr = unwrap_response(self_val);
+        let response = &*response_ptr;
+        match response.content_type() {
+            Some(ct) => {
+                let c_str = std::ffi::CString::new(ct).unwrap_or_default();
+                rb_str_new_cstr(c_str.as_ptr())
+            }
+            None => Qnil.into()
+        }
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_response_charset(self_val: VALUE) -> VALUE {
+    ffi_guard!({
+        let response_ptr = unwrap_response(self_val);
+        let response = &*response_ptr;
+        match response.charset() {
+            Some(cs) => {
+                let c_str = std::ffi::CString::new(cs).unwrap_or_default();
+                rb_str_new_cstr(c_str.as_ptr())
+            }
+            None => Qnil.into()
+        }
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_response_headers(self_val: VALUE) -> VALUE {
+    ffi_guard!({
+        let response_ptr = unwrap_response(self_val);
+        let response = &*response_ptr;
+        let headers_map = response.headers();
+        
+        let hash = rb_hash_new();
+        for (key, value) in headers_map.iter() {
+            let k_cstr = std::ffi::CString::new(key.as_str()).unwrap_or_default();
+            let v_cstr = std::ffi::CString::new(value.as_str()).unwrap_or_default();
+            let k_val = rb_str_new_cstr(k_cstr.as_ptr());
+            let v_val = rb_str_new_cstr(v_cstr.as_ptr());
+            rb_hash_aset(hash, k_val, v_val);
+        }
+        hash
+    })
+}
+
 // Raw rb-sys Init function (will replace #[magnus::init])
 // TODO: Implement module/class definitions
 #[unsafe(no_mangle)]
