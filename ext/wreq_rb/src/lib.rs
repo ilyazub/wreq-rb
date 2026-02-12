@@ -1565,6 +1565,146 @@ pub unsafe extern "C" fn rb_client_headers(self_val: VALUE, arg: VALUE) -> VALUE
     })
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_follow(argc: c_int, argv: *const VALUE, self_val: VALUE) -> VALUE {
+    ffi_guard!({
+        let client_ptr = unwrap_client(self_val);
+        let client = &mut *client_ptr;
+        
+        // Convert argc/argv to Vec<Value>
+        let args: Vec<magnus::Value> = if argc > 0 {
+            std::slice::from_raw_parts(argv, argc as usize)
+                .iter()
+                .map(|&v| magnus::Value::from_raw(v))
+                .collect()
+        } else {
+            vec![]
+        };
+        
+        // Call follow with args slice
+        match client.follow(&args) {
+            Ok(new_client) => wrap_client(new_client),
+            Err(_) => {
+                let msg = std::ffi::CString::new("follow() failed").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_via(argc: c_int, argv: *const VALUE, self_val: VALUE) -> VALUE {
+    ffi_guard!({
+        let client_ptr = unwrap_client(self_val);
+        let client = &mut *client_ptr;
+        
+        // Convert argc/argv to Vec<Value>
+        let args: Vec<magnus::Value> = if argc > 0 {
+            std::slice::from_raw_parts(argv, argc as usize)
+                .iter()
+                .map(|&v| magnus::Value::from_raw(v))
+                .collect()
+        } else {
+            vec![]
+        };
+        
+        // Call via with args slice
+        match client.via(&args) {
+            Ok(new_client) => wrap_client(new_client),
+            Err(_) => {
+                let msg = std::ffi::CString::new("via() failed").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_get(argc: c_int, argv: *const VALUE, self_val: VALUE) -> VALUE {
+    ffi_guard!({
+        let client_ptr = unwrap_client(self_val);
+        let client = &mut *client_ptr;
+        
+        // Convert argc/argv to Vec<Value>
+        let args: Vec<magnus::Value> = if argc > 0 {
+            std::slice::from_raw_parts(argv, argc as usize)
+                .iter()
+                .map(|&v| magnus::Value::from_raw(v))
+                .collect()
+        } else {
+            vec![]
+        };
+        
+        // Call get with args slice
+        match client.get(&args) {
+            Ok(response) => wrap_response(response),
+            Err(_) => {
+                let msg = std::ffi::CString::new("get() failed").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_post(argc: c_int, argv: *const VALUE, self_val: VALUE) -> VALUE {
+    ffi_guard!({
+        let client_ptr = unwrap_client(self_val);
+        let client = &mut *client_ptr;
+        
+        // Convert argc/argv to Vec<Value>
+        let args: Vec<magnus::Value> = if argc > 0 {
+            std::slice::from_raw_parts(argv, argc as usize)
+                .iter()
+                .map(|&v| magnus::Value::from_raw(v))
+                .collect()
+        } else {
+            vec![]
+        };
+        
+        // Call post with args slice
+        match client.post(&args) {
+            Ok(response) => wrap_response(response),
+            Err(_) => {
+                let msg = std::ffi::CString::new("post() failed").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_put(argc: c_int, argv: *const VALUE, self_val: VALUE) -> VALUE {
+    ffi_guard!({
+        let client_ptr = unwrap_client(self_val);
+        let client = &mut *client_ptr;
+        
+        // Convert argc/argv to Vec<Value>
+        let args: Vec<magnus::Value> = if argc > 0 {
+            std::slice::from_raw_parts(argv, argc as usize)
+                .iter()
+                .map(|&v| magnus::Value::from_raw(v))
+                .collect()
+        } else {
+            vec![]
+        };
+        
+        // Call put with args slice
+        match client.put(&args) {
+            Ok(response) => wrap_response(response),
+            Err(_) => {
+                let msg = std::ffi::CString::new("put() failed").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
 // Raw rb-sys Init function (will replace #[magnus::init])
 // TODO: Implement module/class definitions
 #[unsafe(no_mangle)]
