@@ -51,8 +51,8 @@ class WreqTest < Minitest::Test
     assert_equal(200, response.status)
 
     data = JSON.parse(response.body)
-    assert_equal('value1', data['cookies']['cookie1'])
-    assert_equal('value2', data['cookies']['cookie2'])
+    assert_equal('value1', data['cookie1'])
+    assert_equal('value2', data['cookie2'])
   end
 
   def test_random_user_agent
@@ -419,7 +419,7 @@ class WreqTest < Minitest::Test
 
   def test_auth_bearer
     response = Wreq::HTTP.auth('Bearer test-token').get('https://httpbingo.org/bearer')
-    assert_equal 401, response.status.to_i
+    assert_equal 200, response.status.to_i
   end
 
   def test_accept_symbol
@@ -639,7 +639,7 @@ class WreqTest < Minitest::Test
     response = HTTP.basic_auth(user: 'user', pass: 'passwd').get('https://httpbingo.org/basic-auth/user/passwd')
     assert response.status.ok?
     parsed = response.parse
-    assert_equal true, parsed['authenticated']
+    assert_equal true, parsed['authorized']
   end
 
   def test_auth_bearer_success
