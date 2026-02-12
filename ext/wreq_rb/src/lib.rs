@@ -1154,6 +1154,14 @@ fn rb_accept(accept_value: Value) -> Result<RbHttpClient, MagnusError> {
     RbHttpClient::new()?.accept(accept_value)
 }
 
+// Raw rb-sys Init function (will replace #[magnus::init])
+// TODO: Implement module/class definitions
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn Init_wreq_rb_v2() {
+    // Placeholder - will be implemented in subsequent steps
+    // This uses Init_wreq_rb_v2 name to avoid conflict with Magnus's auto-generated Init_wreq_rb
+}
+
 #[magnus::init]
 fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
     let wreq_module = ruby.define_module("Wreq")?;
