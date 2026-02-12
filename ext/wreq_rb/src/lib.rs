@@ -23,6 +23,21 @@ use tokio::runtime::Runtime;
 use url::Url;
 use lazy_static::lazy_static;
 
+// FFI panic safety: Cargo.toml has panic = "abort" in release profile
+// Every extern "C" function MUST catch panics to prevent killing Ruby process
+macro_rules! ffi_guard {
+    ($body:expr) => {
+        match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| $body)) {
+            Ok(result) => result,
+            Err(_) => {
+                let msg = std::ffi::CString::new("Rust panic in native extension").unwrap();
+                unsafe { rb_raise(rb_eRuntimeError, msg.as_ptr()) };
+                unreachable!()
+            }
+        }
+    };
+}
+
 // Fast random implementation similar to wreq-util crate
 fn fast_random() -> u64 {
     thread_local! {
