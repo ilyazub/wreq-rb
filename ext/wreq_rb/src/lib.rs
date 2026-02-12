@@ -22,6 +22,7 @@ use std::time::Duration;
 use tokio::runtime::Runtime;
 use url::Url;
 use lazy_static::lazy_static;
+use base64::Engine;
 
 // FFI panic safety: Cargo.toml has panic = "abort" in release profile
 // Every extern "C" function MUST catch panics to prevent killing Ruby process
@@ -734,8 +735,7 @@ impl RbHttpClient {
         let pass_str = String::try_convert(pass)?;
         
         let credentials = format!("{}:{}", user_str, pass_str);
-        let encoded = magnus::eval::<String>(&format!("require 'base64'; Base64.strict_encode64('{}')", credentials))
-            .map_err(|e| MagnusError::new(exception::runtime_error(), format!("Base64 encoding failed: {}", e)))?;
+        let encoded = base64::engine::general_purpose::STANDARD.encode(credentials.as_bytes());
         
         let mut new_client = self.clone();
         new_client.headers.insert("Authorization".to_string(), format!("Basic {}", encoded));
