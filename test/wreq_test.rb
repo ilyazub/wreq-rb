@@ -194,7 +194,8 @@ class WreqTest < Minitest::Test
 
     assert_equal(200, response.status)
     body = JSON.parse(response.body)
-    assert_equal({ 'name' => 'test', 'value' => 123 }, JSON.parse(body['data']))
+    data = body['data'].is_a?(String) ? JSON.parse(body['data']) : body['data']
+    assert_equal({ 'name' => 'test', 'value' => 123 }, data)
   end
 
   def test_put_request
@@ -543,7 +544,7 @@ class WreqTest < Minitest::Test
     assert_equal 200, response.code
     body = JSON.parse(response.body)
     assert_equal 'value', body['args']['test']
-    assert body['headers']['Accept'].include?('application/json')
+    assert body['headers']['accept'].include?('application/json')
   end
 
   def test_encoding_chainable
@@ -626,13 +627,13 @@ class WreqTest < Minitest::Test
                .follow(max_hops: 5)
                .cookies(session: 'abc')
                .accept(:json)
-               .get('https://httpbingo.org/get', params: { q: 'test' })
+               .get('https://postman-echo.com/get', params: { q: 'test' })
 
     parsed = response.parse
     assert_equal 'test', parsed['args']['q']
-    assert_includes parsed['headers']['X-Custom'], 'val'
-    assert_includes parsed['headers']['Cookie'], 'session=abc'
-    assert_includes parsed['headers']['Accept'], 'application/json'
+    assert_includes parsed['headers']['x-custom'], 'val'
+    assert_includes parsed['headers']['cookie'], 'session=abc'
+    assert_includes parsed['headers']['accept'], 'application/json'
   end
 
   def test_basic_auth_success
@@ -703,7 +704,7 @@ class WreqTest < Minitest::Test
   end
 
   def test_request_method_delete_with_params
-    response = HTTP.request(:delete, 'https://httpbingo.org/delete', params: { reason: 'cleanup' })
+    response = HTTP.request(:delete, 'https://postman-echo.com/delete', params: { reason: 'cleanup' })
     assert response.status.ok?
     body = response.parse
     assert_equal 'cleanup', body['args']['reason']
