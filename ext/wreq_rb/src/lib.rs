@@ -1,5 +1,5 @@
 use rb_sys::*;
-use std::ffi::{c_int, c_long, CString, CStr};
+use std::ffi::{c_int, c_long, c_ulong, CString, CStr};
 use std::os::raw::c_char;
 use std::ptr;
 use magnus::r_hash::ForEach;
@@ -916,8 +916,33 @@ unsafe extern "C" fn response_free(data: *mut std::ffi::c_void) {
     }
 }
 
-unsafe extern "C" fn response_size(_data: *const std::ffi::c_void) -> usize {
-    std::mem::size_of::<RbHttpResponse>()
+unsafe extern "C" fn response_size(_data: *const std::ffi::c_void) -> c_ulong {
+    std::mem::size_of::<RbHttpResponse>() as c_ulong
+}
+
+// Wrapper type to allow static rb_data_type_t which contains non-Sync pointers
+struct RbDataTypeWrapper(rb_data_type_t);
+
+// SAFETY: This is safe to share between threads as it's only ever read
+// and contains constant data (function pointers and null pointers)
+unsafe impl Sync for RbDataTypeWrapper {}
+
+static RB_HTTP_RESPONSE_TYPE: RbDataTypeWrapper = RbDataTypeWrapper(rb_data_type_t {
+    wrap_struct_name: c"RbHttpResponse".as_ptr() as *const c_char,
+    function: rb_data_type_struct__bindgen_ty_1 {
+        dfree: Some(response_free),
+        dsize: Some(response_size),
+        dmark: None,
+        dcompact: None,
+        reserved: [std::ptr::null_mut(); 1],
+    },
+    parent: std::ptr::null(),
+    data: std::ptr::null_mut(),
+    flags: RUBY_TYPED_FREE_IMMEDIATELY as VALUE,
+});
+
+fn get_response_type() -> &'static rb_data_type_t {
+    &RB_HTTP_RESPONSE_TYPE.0
 }
 
 #[magnus::wrap(class = "Wreq::HTTP::Response")]
