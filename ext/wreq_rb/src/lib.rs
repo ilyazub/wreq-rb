@@ -908,8 +908,12 @@ struct ResponseData {
 }
 
 // TypedData for RbHttpResponse (rb-sys migration)
-unsafe extern "C" fn response_free(_data: *mut std::ffi::c_void) {
-    // TODO: Implement in next micro-step
+unsafe extern "C" fn response_free(data: *mut std::ffi::c_void) {
+    if !data.is_null() {
+        unsafe {
+            drop(Box::from_raw(data as *mut RbHttpResponse));
+        }
+    }
 }
 
 unsafe extern "C" fn response_size(_data: *const std::ffi::c_void) -> usize {
