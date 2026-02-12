@@ -1,3 +1,4 @@
+use rb_sys::*;
 use magnus::r_hash::ForEach;
 use magnus::{
     Error as MagnusError, IntoValue, Module, Object, RHash, Symbol, TryConvert, Value, exception,
