@@ -1160,6 +1160,17 @@ fn rb_accept(accept_value: Value) -> Result<RbHttpClient, MagnusError> {
 pub unsafe extern "C" fn Init_wreq_rb_v2() {
     let wreq_module = unsafe { rb_define_module(c"Wreq".as_ptr()) };
     let http_module = unsafe { rb_define_module_under(wreq_module, c"HTTP".as_ptr()) };
+    
+    // Response class definition
+    let response_class = unsafe { rb_define_class_under(http_module, c"Response".as_ptr(), rb_cObject) };
+    unsafe { rb_define_method(response_class, c"status".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_response_status as *const ())), 0) };
+    unsafe { rb_define_method(response_class, c"body".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_response_body as *const ())), 0) };
+    unsafe { rb_define_method(response_class, c"to_s".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_response_to_s as *const ())), 0) };
+    unsafe { rb_define_method(response_class, c"headers".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_response_headers as *const ())), 0) };
+    unsafe { rb_define_method(response_class, c"content_type".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_response_content_type as *const ())), 0) };
+    unsafe { rb_define_method(response_class, c"uri".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_response_uri as *const ())), 0) };
+    unsafe { rb_define_method(response_class, c"code".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_response_code as *const ())), 0) };
+    unsafe { rb_define_method(response_class, c"charset".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_response_charset as *const ())), 0) };
 }
 
 #[magnus::init]
