@@ -1203,8 +1203,30 @@ pub unsafe extern "C" fn Init_wreq_rb_v2() {
     unsafe { rb_define_method(client_class, c"request".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_request as *const ())), -1) };
     unsafe { rb_define_method(client_class, c"persistent".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_persistent as *const ())), -1) };
     
-    // Instance method - arity 0
-    unsafe { rb_define_method(client_class, c"close".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_close as *const ())), 0) };
+     // Instance method - arity 0
+     unsafe { rb_define_method(client_class, c"close".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_close as *const ())), 0) };
+
+     // HTTP module functions
+     unsafe { rb_define_module_function(http_module, c"get".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_get as *const ())), -1) };
+     unsafe { rb_define_module_function(http_module, c"desktop".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_desktop as *const ())), 0) };
+     unsafe { rb_define_module_function(http_module, c"mobile".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_mobile as *const ())), 0) };
+     unsafe { rb_define_module_function(http_module, c"post".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_post as *const ())), -1) };
+     unsafe { rb_define_module_function(http_module, c"put".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_put as *const ())), -1) };
+     unsafe { rb_define_module_function(http_module, c"delete".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_delete as *const ())), -1) };
+     unsafe { rb_define_module_function(http_module, c"head".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_head as *const ())), -1) };
+     unsafe { rb_define_module_function(http_module, c"patch".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_patch as *const ())), -1) };
+     unsafe { rb_define_module_function(http_module, c"request".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_request as *const ())), -1) };
+     unsafe { rb_define_module_function(http_module, c"persistent".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_persistent as *const ())), -1) };
+     unsafe { rb_define_module_function(http_module, c"headers".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_headers as *const ())), 1) };
+     unsafe { rb_define_module_function(http_module, c"follow".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_follow as *const ())), -1) };
+     unsafe { rb_define_module_function(http_module, c"timeout".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_timeout as *const ())), 1) };
+     unsafe { rb_define_module_function(http_module, c"proxy".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_proxy as *const ())), 1) };
+     unsafe { rb_define_module_function(http_module, c"via".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_via as *const ())), -1) };
+     unsafe { rb_define_module_function(http_module, c"cookies".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_cookies as *const ())), 1) };
+     unsafe { rb_define_module_function(http_module, c"basic_auth".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_basic_auth as *const ())), 1) };
+     unsafe { rb_define_module_function(http_module, c"auth".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_auth as *const ())), 1) };
+     unsafe { rb_define_module_function(http_module, c"accept".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_accept as *const ())), 1) };
+     unsafe { rb_define_module_function(http_module, c"encoding".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_http_encoding as *const ())), 1) };
 }
 
 #[magnus::init]
