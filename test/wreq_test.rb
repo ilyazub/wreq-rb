@@ -351,20 +351,23 @@ class WreqTest < Minitest::Test
   end
 
   def test_via_with_host_and_port
-    skip 'requires proxy server'
-    response = Wreq::HTTP.via('proxy.example.com', 8080).get('https://httpbingo.org/get')
+    skip 'Set WREQ_PROXY_URL to run proxy tests' unless ENV['WREQ_PROXY_URL']
+    proxy_url = URI.parse(ENV['WREQ_PROXY_URL'])
+    response = Wreq::HTTP.via(proxy_url.host, proxy_url.port).get('https://httpbingo.org/get')
     assert_equal 200, response.status
   end
 
   def test_via_with_auth
-    skip 'requires proxy server with auth'
-    response = Wreq::HTTP.via('proxy.example.com', 8080, 'user', 'pass').get('https://httpbingo.org/get')
+    skip 'Set WREQ_PROXY_URL to run proxy tests' unless ENV['WREQ_PROXY_URL']
+    proxy_url = URI.parse(ENV['WREQ_PROXY_URL'])
+    response = Wreq::HTTP.via(proxy_url.host, proxy_url.port, proxy_url.user, proxy_url.password).get('https://httpbingo.org/get')
     assert_equal 200, response.status
   end
 
   def test_via_chainable
-    skip 'requires proxy server'
-    response = Wreq::HTTP.via('proxy.example.com', 8080).headers(accept: 'application/json').get('https://httpbingo.org/get')
+    skip 'Set WREQ_PROXY_URL to run proxy tests' unless ENV['WREQ_PROXY_URL']
+    proxy_url = URI.parse(ENV['WREQ_PROXY_URL'])
+    response = Wreq::HTTP.via(proxy_url.host, proxy_url.port).timeout(30).get('https://httpbingo.org/get')
     assert_equal 200, response.status
   end
 

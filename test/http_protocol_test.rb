@@ -537,10 +537,6 @@ class HttpProtocolTest < Minitest::Test
     end
   end
 
-  def test_persistent_connection_block_form
-    skip 'Persistent connection block form occasionally fails with 502'
-  end
-
   def test_persistent_connection_timeout
     # Persistent connection with timeout option
     client = HTTP.persistent('https://httpbingo.org', timeout: 30)
@@ -645,10 +641,6 @@ class HttpProtocolTest < Minitest::Test
     refute_match(/Mobile/i, user_agent)
   end
 
-  def test_mobile_user_agent
-    skip 'tls.peet.ws mobile endpoint occasionally unreliable'
-  end
-
   # ============================================================================
   # TLS and Security Tests
   # ============================================================================
@@ -678,12 +670,6 @@ class HttpProtocolTest < Minitest::Test
     assert_raises(RuntimeError) do
       HTTP.get('http://[invalid url]')
     end
-  end
-
-  def test_connection_timeout_raises_error
-    # Connection to unreachable host should timeout/raise
-    # Using very short timeout to 127.0.0.1 which should refuse/timeout
-    skip 'Connection test skipped (may pass or fail depending on network)'
   end
 
   def test_request_method_get
