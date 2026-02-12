@@ -907,6 +907,15 @@ struct ResponseData {
     url: String,
 }
 
+// TypedData for RbHttpResponse (rb-sys migration)
+unsafe extern "C" fn response_free(_data: *mut std::ffi::c_void) {
+    // TODO: Implement in next micro-step
+}
+
+unsafe extern "C" fn response_size(_data: *const std::ffi::c_void) -> usize {
+    std::mem::size_of::<RbHttpResponse>()
+}
+
 #[magnus::wrap(class = "Wreq::HTTP::Response")]
 struct RbHttpResponse {
     data: Arc<ResponseData>,
