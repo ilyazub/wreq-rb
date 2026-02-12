@@ -1,99 +1,13 @@
 require "bundler/gem_tasks"
 require "rake/testtask"
-require "rake/extensiontask"
+require "rb_sys/extensiontask"
 
 GEMSPEC = Gem::Specification.load("wreq-rb.gemspec") || abort("Could not load wreq-rb.gemspec")
 
-# Define supported platforms (focusing on Linux targets for cross-rs)
-SUPPORTED_PLATFORMS = [
-  "x86_64-linux",
-  "arm64-linux"
-]
-
-# Helper to check if Docker/Podman is available
-def container_runtime_available?
-  system("which docker > /dev/null 2>&1") || system("which podman > /dev/null 2>&1")
-end
-
-# Helper to build for a specific platform
-def build_for_platform(platform)
-  puts "Building for platform: #{platform}"
-  sh 'bundle', 'exec', 'rb-sys-dock', '--platform', platform, '--build'
-end
-
-# Define the extension task
-Rake::ExtensionTask.new("wreq_rb", GEMSPEC) do |ext|
+# Define the extension task using RbSys for proper cross-compilation support
+RbSys::ExtensionTask.new("wreq-rb", GEMSPEC) do |ext|
   ext.lib_dir = "lib/wreq"
-  ext.ext_dir = "ext/wreq_rb"
-  ext.cross_compile = true
-  ext.cross_platform = SUPPORTED_PLATFORMS
 end
-
-# Build the native extension for the current platform
-desc "Build the native extension for the current platform"
-task :compile do
-  sh "bundle"
-  sh "bundle exec rake build"
-end
-
-# Build the gem for the current platform
-desc "Build the gem for the current platform"
-task :gem => :compile
-
-desc "Cross-compile using cross-rs"
-task :cross_compile do
-  unless ENV['SKIP_CROSS_COMPILE']
-    unless system("which cross > /dev/null")
-      abort "Error: cross-rs not installed. Run: cargo install cross"
-    end
-
-    targets = %w[
-      x86_64-unknown-linux-musl
-      aarch64-unknown-linux-musl
-    ]
-
-    targets.each do |target|
-      puts "\n\e[33mBuilding for #{target} using cross-rs\e[0m"
-      sh "cross build --release --target #{target}"
-    end
-
-    # Verify artifacts in cross's target directory
-    sh %(find target/cross -name '*.so')
-  end
-end
-
-# Cross-compile and build native gems for all supported platforms
-namespace "gem" do
-  desc "Build native gems for all supported platforms"
-  task "all-platforms" => [:clean] do
-    require "rake_compiler_dock"
-    
-    if container_runtime_available?
-      # Build using containers for each platform
-      SUPPORTED_PLATFORMS.each { |platform| build_for_platform(platform) }
-    else
-      # Single cross-compile invocation for all platforms
-      puts "Using local cross-compile for all platforms"
-      Rake::Task[:cross_compile].invoke
-    end
-  end
-
-  desc "Build native extension for a specific platform (e.g., `rake 'gem:native[x86_64-linux]'`)"
-  task :native, [:platform] do |_t, args|
-    platform = args[:platform]
-    if platform.nil? || platform.empty?
-      abort "Platform must be specified, e.g., rake 'gem:native[x86_64-linux]'"
-    end
-    
-    unless container_runtime_available?
-      abort "Docker or Podman is required for cross-compilation but not found. Please install one of them."
-    end
-    
-    build_for_platform(platform)
-  end
-end
-
- 
 
 # Development tasks
 task :fmt do
@@ -127,8 +41,4 @@ end
 desc "Run all benchmarks"
 task :benchmark => ['benchmark:http_clients_rb']
 
-task default: %i[compile test] do
-  if ENV['CROSS_COMPILE']
-    Rake::Task[:cross_compile].invoke
-  end
-end
+task default: %i[compile test]

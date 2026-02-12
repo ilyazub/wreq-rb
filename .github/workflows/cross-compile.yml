@@ -1,46 +1,49 @@
 name: Cross-Compile Gem
 
-on: [push, workflow_dispatch]
-
-env:
-  CARGO_TARGET_DIR: ./target/zig
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
 
 jobs:
+  ci-data:
+    runs-on: ubuntu-latest
+    outputs:
+      result: ${{ steps.fetch.outputs.result }}
+    steps:
+      - id: fetch
+        uses: oxidize-rb/actions/fetch-ci-data@v1
+        with:
+          supported-ruby-platforms: |
+            exclude: [arm-linux]
+          stable-ruby-versions: |
+            exclude: [head]
+
   cross-compile:
-    name: Build for ${{ matrix.target }}
+    name: Build for ${{ matrix.ruby-platform }}
+    needs: ci-data
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        target:
-          - x86_64-unknown-linux-gnu
-          - aarch64-unknown-linux-gnu
-          - x86_64-pc-windows-gnu
-          - aarch64-apple-darwin
-          - x86_64-apple-darwin
-
+        ruby-platform: ${{ fromJSON(needs.ci-data.outputs.result).supported-ruby-platforms }}
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Install Build Dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake perl libclang-dev
-      
-      - uses: ./.github/actions/setup-rust
+
+      - uses: ruby/setup-ruby@v1
         with:
-          target: ${{ matrix.target }}
-      
-      - name: Build for ${{ matrix.target }}
-        run: |
-          cargo zigbuild --target ${{ matrix.target }} --release
-          mkdir -p native/${{ matrix.target }}
-          cp target/zig/${{ matrix.target }}/release/libwreq_rb.* native/${{ matrix.target }}/
-      
-      - name: Package gem
-        run: |
-          gem build wreq-rb.gemspec
-          mkdir -p pkg
-          mv *.gem pkg/
-          
+          ruby-version: "3.2"
+          bundler-cache: true
+
+      - uses: oxidize-rb/actions/cross-gem@v1
+        id: cross-gem
+        with:
+          platform: ${{ matrix.ruby-platform }}
+          ruby-versions: ${{ join(fromJSON(needs.ci-data.outputs.result).stable-ruby-versions, ',') }}
+
       - uses: actions/upload-artifact@v4
         with:
-          name: cross-compiled-gems
-          path: pkg/*.gem
+          name: cross-gem-${{ matrix.ruby-platform }}
+          path: ${{ steps.cross-gem.outputs.gem-path }}
+          if-no-files-found: error
