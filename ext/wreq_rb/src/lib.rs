@@ -394,8 +394,26 @@ unsafe extern "C" fn client_free(data: *mut std::ffi::c_void) {
     }
 }
 
-unsafe extern "C" fn client_size(_data: *const std::ffi::c_void) -> usize {
-    std::mem::size_of::<RbHttpClient>()
+unsafe extern "C" fn client_size(_data: *const std::ffi::c_void) -> std::ffi::c_ulong {
+    std::mem::size_of::<RbHttpClient>() as std::ffi::c_ulong
+}
+
+static RB_HTTP_CLIENT_TYPE: RbDataTypeWrapper = RbDataTypeWrapper(rb_data_type_t {
+    wrap_struct_name: c"RbHttpClient".as_ptr() as *const c_char,
+    function: rb_data_type_struct__bindgen_ty_1 {
+        dfree: Some(client_free),
+        dsize: Some(client_size),
+        dmark: None,
+        dcompact: None,
+        reserved: [std::ptr::null_mut(); 1],
+    },
+    parent: std::ptr::null(),
+    data: std::ptr::null_mut(),
+    flags: RUBY_TYPED_FREE_IMMEDIATELY as VALUE,
+});
+
+fn get_client_type() -> &'static rb_data_type_t {
+    &RB_HTTP_CLIENT_TYPE.0
 }
 
 #[magnus::wrap(class = "Wreq::HTTP::Client")]
