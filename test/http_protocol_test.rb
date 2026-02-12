@@ -297,7 +297,7 @@ class HttpProtocolTest < Minitest::Test
     assert_equal 200, response.status.to_i
 
     body = JSON.parse(response.body)
-    assert_equal '123', body['args']['id']
+    assert_equal ['123'], body['args']['id']
   end
 
   # ============================================================================
@@ -391,7 +391,7 @@ class HttpProtocolTest < Minitest::Test
     assert_equal 200, response.status.to_i
 
     body = JSON.parse(response.body)
-    assert_equal 'custom-value', body['headers']['X-Custom-Header']
+    assert_equal ['custom-value'], body['headers']['X-Custom-Header']
   end
 
   def test_basic_authentication
@@ -400,7 +400,7 @@ class HttpProtocolTest < Minitest::Test
     assert response.status.success?
 
     body = JSON.parse(response.body)
-    assert_equal true, body['authenticated']
+    assert_equal true, body['authorized']
   end
 
   def test_bearer_token_authentication
@@ -418,8 +418,8 @@ class HttpProtocolTest < Minitest::Test
     assert_equal 200, response.status.to_i
 
     body = JSON.parse(response.body)
-    assert_equal 'abc123', body['cookies']['session']
-    assert_equal 'testuser', body['cookies']['user']
+    assert_equal 'abc123', body['session']
+    assert_equal 'testuser', body['user']
   end
 
   def test_cookies_in_response
@@ -436,7 +436,9 @@ class HttpProtocolTest < Minitest::Test
     assert_equal 200, response.status.to_i
 
     body = JSON.parse(response.body)
-    assert_includes body['headers']['Accept'], 'application/json'
+    accept = body['headers']['Accept']
+    accept = accept.is_a?(Array) ? accept.first : accept
+    assert_includes accept, 'application/json'
   end
 
   def test_accept_header_html
@@ -456,8 +458,8 @@ class HttpProtocolTest < Minitest::Test
     assert_equal 200, response.status.to_i
 
     body = JSON.parse(response.body)
-    assert_equal 'test', body['args']['search']
-    assert_equal '2', body['args']['page']
+    assert_equal ['test'], body['args']['search']
+    assert_equal ['2'], body['args']['page']
   end
 
   def test_post_with_json_body
@@ -476,8 +478,8 @@ class HttpProtocolTest < Minitest::Test
     assert_equal 200, response.status.to_i
 
     body = JSON.parse(response.body)
-    assert_equal 'Bob', body['form']['name']
-    assert_equal 'bob@example.com', body['form']['email']
+    assert_equal ['Bob'], body['form']['name']
+    assert_equal ['bob@example.com'], body['form']['email']
   end
 
   def test_post_with_raw_body
@@ -577,7 +579,7 @@ class HttpProtocolTest < Minitest::Test
 
     assert_equal 200, response.status.to_i
     body = JSON.parse(response.body)
-    assert_equal 'true', body['args']['test']
+    assert_equal ['true'], body['args']['test']
   end
 
   # ============================================================================
@@ -714,7 +716,7 @@ class HttpProtocolTest < Minitest::Test
 
     assert response.status.success?
     body = JSON.parse(response.body)
-    assert_equal true, body['authenticated']
+    assert_equal true, body['authorized']
   end
 
   def test_api_workflow_get_and_transform
@@ -723,7 +725,7 @@ class HttpProtocolTest < Minitest::Test
     assert_equal 200, response.status.to_i
 
     data = response.parse
-    assert_equal 'test', data['args']['data']
+    assert_equal ['test'], data['args']['data']
     assert_includes data['url'], 'httpbingo.org/get'
   end
 
