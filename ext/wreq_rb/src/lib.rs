@@ -1459,6 +1459,109 @@ pub unsafe extern "C" fn rb_client_cookies(self_val: VALUE, arg: VALUE) -> VALUE
                 Qnil.into()
             }
         }
+     })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_basic_auth(self_val: VALUE, arg: VALUE) -> VALUE {
+    ffi_guard!({
+        let client_ptr = unwrap_client(self_val);
+        let client = &mut *client_ptr;
+        let magnus_arg = magnus::Value::from_raw(arg);
+        match magnus::r_hash::RHash::try_convert(magnus_arg) {
+            Ok(auth_hash) => {
+                match client.basic_auth(auth_hash) {
+                    Ok(new_client) => wrap_client(new_client),
+                    Err(_) => {
+                        let msg = std::ffi::CString::new("basic_auth() failed").unwrap();
+                        rb_raise(rb_eRuntimeError, msg.as_ptr());
+                        Qnil.into()
+                    }
+                }
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("basic_auth() requires a Hash").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_auth(self_val: VALUE, arg: VALUE) -> VALUE {
+    ffi_guard!({
+        let client_ptr = unwrap_client(self_val);
+        let client = &mut *client_ptr;
+        let magnus_arg = magnus::Value::from_raw(arg);
+        match String::try_convert(magnus_arg) {
+            Ok(auth_value) => {
+                let new_client = client.auth(auth_value);
+                wrap_client(new_client)
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("auth() failed").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_accept(self_val: VALUE, arg: VALUE) -> VALUE {
+    ffi_guard!({
+        let client_ptr = unwrap_client(self_val);
+        let client = &mut *client_ptr;
+        let magnus_arg = magnus::Value::from_raw(arg);
+        match client.accept(magnus_arg) {
+            Ok(new_client) => wrap_client(new_client),
+            Err(_) => {
+                let msg = std::ffi::CString::new("accept() failed").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_encoding(self_val: VALUE, arg: VALUE) -> VALUE {
+    ffi_guard!({
+        let client_ptr = unwrap_client(self_val);
+        let client = &mut *client_ptr;
+        let magnus_arg = magnus::Value::from_raw(arg);
+        match String::try_convert(magnus_arg) {
+            Ok(enc) => {
+                let new_client = client.encoding(enc);
+                wrap_client(new_client)
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("encoding() failed").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_headers(self_val: VALUE, arg: VALUE) -> VALUE {
+    ffi_guard!({
+        let client_ptr = unwrap_client(self_val);
+        let client = &mut *client_ptr;
+        let magnus_arg = magnus::Value::from_raw(arg);
+        match magnus::r_hash::RHash::try_convert(magnus_arg) {
+            Ok(headers_hash) => {
+                let new_client = client.headers(headers_hash);
+                wrap_client(new_client)
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("headers() failed").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
     })
 }
 
