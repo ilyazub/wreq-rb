@@ -29,7 +29,7 @@ jobs:
       matrix:
         ruby-platform: ${{ fromJSON(needs.ci-data.outputs.result).supported-ruby-platforms }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         with:
@@ -44,7 +44,7 @@ jobs:
           platform: ${{ matrix.ruby-platform }}
           ruby-versions: ${{ join(fromJSON(needs.ci-data.outputs.result).stable-ruby-versions, ',') }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: cross-gem-${{ matrix.ruby-platform }}
           path: ${{ steps.cross-gem.outputs.gem-path }}
