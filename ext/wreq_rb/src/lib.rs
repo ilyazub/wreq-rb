@@ -1158,8 +1158,8 @@ fn rb_accept(accept_value: Value) -> Result<RbHttpClient, MagnusError> {
 // TODO: Implement module/class definitions
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn Init_wreq_rb_v2() {
-    // Placeholder - will be implemented in subsequent steps
-    // This uses Init_wreq_rb_v2 name to avoid conflict with Magnus's auto-generated Init_wreq_rb
+    let wreq_module = unsafe { rb_define_module(c"Wreq".as_ptr()) };
+    let http_module = unsafe { rb_define_module_under(wreq_module, c"HTTP".as_ptr()) };
 }
 
 #[magnus::init]
