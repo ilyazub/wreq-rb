@@ -416,6 +416,27 @@ fn get_client_type() -> &'static rb_data_type_t {
     &RB_HTTP_CLIENT_TYPE.0
 }
 
+// Helper functions for wrapping/unwrapping RbHttpClient
+unsafe fn wrap_client(client: RbHttpClient) -> VALUE {
+    let boxed = Box::new(client);
+    let ptr = Box::into_raw(boxed) as *mut std::ffi::c_void;
+    rb_sys::TypedData_Wrap_Struct(
+        get_client_type() as *const _ as *mut _,
+        get_client_type(),
+        ptr
+    )
+}
+
+unsafe fn unwrap_client(value: VALUE) -> *mut RbHttpClient {
+    let mut ptr: *mut RbHttpClient = std::ptr::null_mut();
+    rb_sys::TypedData_Get_Struct(
+        value,
+        get_client_type(),
+        &mut ptr as *mut *mut RbHttpClient as *mut *mut std::ffi::c_void
+    );
+    ptr
+}
+
 #[magnus::wrap(class = "Wreq::HTTP::Client")]
 struct RbHttpClient {
     client: ClientWrap,
