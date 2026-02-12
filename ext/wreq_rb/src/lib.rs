@@ -1170,7 +1170,41 @@ pub unsafe extern "C" fn Init_wreq_rb_v2() {
     unsafe { rb_define_method(response_class, c"content_type".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_response_content_type as *const ())), 0) };
     unsafe { rb_define_method(response_class, c"uri".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_response_uri as *const ())), 0) };
     unsafe { rb_define_method(response_class, c"code".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_response_code as *const ())), 0) };
-    unsafe { rb_define_method(response_class, c"charset".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_response_charset as *const ())), 0) };
+     unsafe { rb_define_method(response_class, c"charset".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_response_charset as *const ())), 0) };
+
+    // Client class definition
+    let client_class = unsafe { rb_define_class_under(http_module, c"Client".as_ptr(), rb_cObject) };
+    
+    // Singleton methods (arity 0)
+    unsafe { rb_define_singleton_method(client_class, c"new".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_new as *const ())), 0) };
+    unsafe { rb_define_singleton_method(client_class, c"new_desktop".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_new_desktop as *const ())), 0) };
+    unsafe { rb_define_singleton_method(client_class, c"new_mobile".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_new_mobile as *const ())), 0) };
+    
+    // Instance methods - arity 1
+    unsafe { rb_define_method(client_class, c"with_headers".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_with_headers as *const ())), 1) };
+    unsafe { rb_define_method(client_class, c"timeout".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_timeout as *const ())), 1) };
+    unsafe { rb_define_method(client_class, c"with_proxy".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_with_proxy as *const ())), 1) };
+    unsafe { rb_define_method(client_class, c"cookies".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_cookies as *const ())), 1) };
+    unsafe { rb_define_method(client_class, c"basic_auth".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_basic_auth as *const ())), 1) };
+    unsafe { rb_define_method(client_class, c"auth".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_auth as *const ())), 1) };
+    unsafe { rb_define_method(client_class, c"accept".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_accept as *const ())), 1) };
+    unsafe { rb_define_method(client_class, c"encoding".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_encoding as *const ())), 1) };
+    unsafe { rb_define_method(client_class, c"headers".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_headers as *const ())), 1) };
+    
+    // Instance methods - arity -1 (variable args)
+    unsafe { rb_define_method(client_class, c"follow".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_follow as *const ())), -1) };
+    unsafe { rb_define_method(client_class, c"via".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_via as *const ())), -1) };
+    unsafe { rb_define_method(client_class, c"get".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_get as *const ())), -1) };
+    unsafe { rb_define_method(client_class, c"post".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_post as *const ())), -1) };
+    unsafe { rb_define_method(client_class, c"put".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_put as *const ())), -1) };
+    unsafe { rb_define_method(client_class, c"delete".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_delete as *const ())), -1) };
+    unsafe { rb_define_method(client_class, c"head".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_head as *const ())), -1) };
+    unsafe { rb_define_method(client_class, c"patch".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_patch as *const ())), -1) };
+    unsafe { rb_define_method(client_class, c"request".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_request as *const ())), -1) };
+    unsafe { rb_define_method(client_class, c"persistent".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_persistent as *const ())), -1) };
+    
+    // Instance method - arity 0
+    unsafe { rb_define_method(client_class, c"close".as_ptr(), Some(std::mem::transmute::<*const (), unsafe extern "C" fn() -> VALUE>(rb_client_close as *const ())), 0) };
 }
 
 #[magnus::init]
