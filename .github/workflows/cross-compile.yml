@@ -24,6 +24,8 @@ jobs:
     name: Build for ${{ matrix.ruby-platform }}
     needs: ci-data
     runs-on: ubuntu-latest
+    env:
+      BUNDLE_WITHOUT: development
     strategy:
       fail-fast: false
       matrix:
