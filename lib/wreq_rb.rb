@@ -162,3 +162,6 @@ module Wreq
     end
   end
 end
+
+# Drop-in http.rb compatibility: HTTP.get("https://example.com")
+HTTP = Wreq::HTTP unless defined?(HTTP)
