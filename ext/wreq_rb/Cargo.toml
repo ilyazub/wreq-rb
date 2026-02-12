@@ -14,7 +14,6 @@ name = "wreq_rb"
 crate-type = ["cdylib"]
 
 [dependencies]
-magnus = { version = "0.7", features = ["embed"] }
 rb-sys = { version = "0.9.39", features = [
   "bindgen-rbimpls",
   "bindgen-deprecated-types",
@@ -36,9 +35,6 @@ rb-sys = { version = "0.9.39", features = [
   "bindgen-deprecated-types",
   "stable-api-compiled-fallback",
 ] }
-criterion = "0.5.1"
-reqwest = { version = "0.12", features = ["blocking"] }
-futures = "0.3"
 tokio = { version = "1.36", features = ["full"] }
 serial_test = "3.2.0"
 
