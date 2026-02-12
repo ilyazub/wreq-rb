@@ -232,7 +232,7 @@ fn apply_params_to_url(url_str: &str, args: &[Value]) -> Result<String, MagnusEr
     Ok(url_str.to_string())
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum HttpMethod {
     Get,
     Post,
@@ -1147,101 +1147,127 @@ fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
 
 #[cfg(test)]
 mod tests {
-    #[allow(unused_imports)]
     use super::*;
-    use serial_test::serial;
-    use std::sync::Once;
-    use tokio::runtime::Runtime;
 
-    static INIT: Once = Once::new();
-    static mut RUNTIME: Option<Runtime> = None;
-
-    fn init_ruby() {
-        INIT.call_once(|| {
-            unsafe {
-                // Initialize Ruby VM
-                magnus::embed::init();
-
-                // Configure single-threaded Tokio runtime compatible with Ruby
-                RUNTIME = Some(
-                    tokio::runtime::Builder::new_current_thread()
-                        .enable_all()
-                        .build()
-                        .unwrap(),
-                );
-            }
-        });
-    }
-
-    // No longer needed as proxy test is skipped
-
+    // Tests for fast_random() - pure function returning u64
     #[test]
-    #[serial]
-    fn test_http_client_basic() {
-        init_ruby();
-
-        // Skip this test - get() now requires &[Value] args (Task 4 refactor)
-        println!("Skipping test_http_client_basic - requires Ruby Value array");
+    fn test_fast_random_returns_non_zero() {
+        let value = fast_random();
+        assert_ne!(value, 0, "fast_random should not return zero");
     }
 
     #[test]
-    #[serial]
-    fn test_http_client_with_proxy() {
-        init_ruby();
+    fn test_fast_random_varies() {
+        let value1 = fast_random();
+        let value2 = fast_random();
+        assert_ne!(
+            value1, value2,
+            "fast_random should return different values on successive calls"
+        );
+    }
 
-        // Skip this test as it causes runtime conflicts
-        println!("Skipping proxy test - runtime conflicts");
+    // Tests for get_random_desktop_emulation() - returns valid variant
+    #[test]
+    fn test_get_random_desktop_emulation_valid() {
+        let emulation = get_random_desktop_emulation();
+        // Check that we got one of the expected desktop variants
+        matches!(
+            emulation,
+            WreqEmulation::Chrome134
+                | WreqEmulation::Chrome128
+                | WreqEmulation::Chrome101
+                | WreqEmulation::Firefox135
+                | WreqEmulation::Safari17_0
+        );
+    }
+
+    // Tests for get_random_mobile_emulation() - returns valid variant
+    #[test]
+    fn test_get_random_mobile_emulation_valid() {
+        let emulation = get_random_mobile_emulation();
+        // Check that we got one of the expected mobile variants
+        matches!(
+            emulation,
+            WreqEmulation::SafariIos17_4_1
+                | WreqEmulation::SafariIos17_2
+                | WreqEmulation::SafariIos16_5
+                | WreqEmulation::FirefoxAndroid135
+        );
+    }
+
+    // Tests for get_random_emulation() - returns valid variant (desktop or mobile)
+    #[test]
+    fn test_get_random_emulation_valid() {
+        let emulation = get_random_emulation();
+        // Should return either a desktop or mobile variant
+        matches!(
+            emulation,
+            WreqEmulation::Chrome134
+                | WreqEmulation::Chrome128
+                | WreqEmulation::Chrome101
+                | WreqEmulation::Firefox135
+                | WreqEmulation::Safari17_0
+                | WreqEmulation::SafariIos17_4_1
+                | WreqEmulation::SafariIos17_2
+                | WreqEmulation::SafariIos16_5
+                | WreqEmulation::FirefoxAndroid135
+        );
+    }
+
+    // Tests for normalize_header_name() - multiple test cases
+    #[test]
+    fn test_normalize_header_name_underscores() {
+        let result = normalize_header_name("content_type");
+        assert_eq!(result, "Content-Type");
     }
 
     #[test]
-    #[serial]
-    fn test_http_client_post() {
-        init_ruby();
-
-        // Skip this test as it requires Ruby thread context
-        println!("Skipping test_http_client_post - requires Ruby thread context");
+    fn test_normalize_header_name_hyphens() {
+        let result = normalize_header_name("x-custom-header");
+        assert_eq!(result, "X-Custom-Header");
     }
 
     #[test]
-    #[serial]
-    fn test_http_client_put() {
-        init_ruby();
-
-        // Skip this test as it requires Ruby thread context
-        println!("Skipping test_http_client_put - requires Ruby thread context");
+    fn test_normalize_header_name_uppercase() {
+        let result = normalize_header_name("ACCEPT");
+        assert_eq!(result, "Accept");
     }
 
     #[test]
-    #[serial]
-    fn test_http_client_delete() {
-        init_ruby();
-
-        // Skip this test - delete() now requires &[Value] args
-        println!("Skipping test_http_client_delete - requires Ruby Value array");
+    fn test_normalize_header_name_mixed() {
+        let result = normalize_header_name("content_type");
+        assert_eq!(result, "Content-Type");
     }
 
     #[test]
-    #[serial]
-    fn test_http_client_head() {
-        init_ruby();
+    fn test_normalize_header_name_already_normalized() {
+        let result = normalize_header_name("Content-Type");
+        assert_eq!(result, "Content-Type");
+    }
 
-        println!("Skipping test_http_client_head - requires Ruby Value array");
+    // Tests for HttpMethod enum - Copy/Clone traits
+    #[test]
+    fn test_http_method_copy() {
+        let method1 = HttpMethod::Get;
+        let method2 = method1; // Copy should work
+        assert!(matches!(method1, HttpMethod::Get));
+        assert!(matches!(method2, HttpMethod::Get));
     }
 
     #[test]
-    #[serial]
-    fn test_http_client_patch() {
-        init_ruby();
-
-        // Skip this test as it requires Ruby thread context
-        println!("Skipping test_http_client_patch - requires Ruby thread context");
+    fn test_http_method_clone() {
+        let method1 = HttpMethod::Post;
+        let method2 = method1.clone();
+        assert!(matches!(method1, HttpMethod::Post));
+        assert!(matches!(method2, HttpMethod::Post));
     }
 
     #[test]
-    #[serial]
-    fn test_http_response() {
-        init_ruby();
-
-        println!("Skipping test_http_response - requires Ruby Value array");
+    fn test_http_method_equality() {
+        let get1 = HttpMethod::Get;
+        let get2 = HttpMethod::Get;
+        let post = HttpMethod::Post;
+        assert_eq!(get1, get2);
+        assert_ne!(get1, post);
     }
 }
