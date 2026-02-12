@@ -20,34 +20,22 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-
+      
       - name: Install Build Dependencies
         run: sudo apt-get update && sudo apt-get install -y cmake perl libclang-dev
       
       - uses: ./.github/actions/setup-rust
         with:
           target: ${{ matrix.target }}
-
-      - name: Configure Zig for Darwin targets
-        if: contains(matrix.target, 'apple-darwin')
-        run: |
-          echo "ZIG_SYSTEM_LINKER_HACK=1" >> $GITHUB_ENV
-          echo "ZIG_SYSTEM_INCLUDE_PATH=/usr/include" >> $GITHUB_ENV
       
       - name: Build for ${{ matrix.target }}
         run: |
           cargo zigbuild --target ${{ matrix.target }} --release
-          mkdir -p lib/wreq/${{ matrix.target }}
-          cp target/zig/${{ matrix.target }}/release/libwreq_rb.* lib/wreq/${{ matrix.target }}/
+          mkdir -p native/${{ matrix.target }}
+          cp target/zig/${{ matrix.target }}/release/libwreq_rb.* native/${{ matrix.target }}/
       
       - name: Package gem
         run: |
-          bundle install
           gem build wreq-rb.gemspec
           mkdir -p pkg
           mv *.gem pkg/

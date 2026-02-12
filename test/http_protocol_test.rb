@@ -9,10 +9,6 @@ require 'json'
 class HttpProtocolTest < Minitest::Test
   HTTP = Wreq::HTTP
 
-  def extract_first(value)
-    value.is_a?(Array) ? value.first : value
-  end
-
   # ============================================================================
   # HTTP/1.1 and HTTP/2 Protocol Detection Tests
   # ============================================================================
@@ -301,7 +297,7 @@ class HttpProtocolTest < Minitest::Test
     assert_equal 200, response.status.to_i
 
     body = JSON.parse(response.body)
-    assert_equal '123', extract_first(body['args']['id'])
+    assert_equal '123', body['args']['id']
   end
 
   # ============================================================================
@@ -395,7 +391,7 @@ class HttpProtocolTest < Minitest::Test
     assert_equal 200, response.status.to_i
 
     body = JSON.parse(response.body)
-    assert_equal 'custom-value', extract_first(body['headers']['X-Custom-Header'])
+    assert_equal 'custom-value', body['headers']['X-Custom-Header']
   end
 
   def test_basic_authentication
@@ -404,7 +400,7 @@ class HttpProtocolTest < Minitest::Test
     assert response.status.success?
 
     body = JSON.parse(response.body)
-    assert_equal true, body['authorized']
+    assert_equal true, body['authenticated']
   end
 
   def test_bearer_token_authentication
@@ -422,8 +418,8 @@ class HttpProtocolTest < Minitest::Test
     assert_equal 200, response.status.to_i
 
     body = JSON.parse(response.body)
-    assert_equal 'abc123', body['session']
-    assert_equal 'testuser', body['user']
+    assert_equal 'abc123', body['cookies']['session']
+    assert_equal 'testuser', body['cookies']['user']
   end
 
   def test_cookies_in_response
@@ -460,8 +456,8 @@ class HttpProtocolTest < Minitest::Test
     assert_equal 200, response.status.to_i
 
     body = JSON.parse(response.body)
-    assert_equal 'test', extract_first(body['args']['search'])
-    assert_equal '2', extract_first(body['args']['page'])
+    assert_equal 'test', body['args']['search']
+    assert_equal '2', body['args']['page']
   end
 
   def test_post_with_json_body
@@ -480,8 +476,8 @@ class HttpProtocolTest < Minitest::Test
     assert_equal 200, response.status.to_i
 
     body = JSON.parse(response.body)
-    assert_equal 'Bob', extract_first(body['form']['name'])
-    assert_equal 'bob@example.com', extract_first(body['form']['email'])
+    assert_equal 'Bob', body['form']['name']
+    assert_equal 'bob@example.com', body['form']['email']
   end
 
   def test_post_with_raw_body
@@ -581,7 +577,7 @@ class HttpProtocolTest < Minitest::Test
 
     assert_equal 200, response.status.to_i
     body = JSON.parse(response.body)
-    assert_equal 'true', extract_first(body['args']['test'])
+    assert_equal 'true', body['args']['test']
   end
 
   # ============================================================================
@@ -718,7 +714,7 @@ class HttpProtocolTest < Minitest::Test
 
     assert response.status.success?
     body = JSON.parse(response.body)
-    assert_equal true, body['authorized']
+    assert_equal true, body['authenticated']
   end
 
   def test_api_workflow_get_and_transform
@@ -727,7 +723,7 @@ class HttpProtocolTest < Minitest::Test
     assert_equal 200, response.status.to_i
 
     data = response.parse
-    assert_equal 'test', extract_first(data['args']['data'])
+    assert_equal 'test', data['args']['data']
     assert_includes data['url'], 'httpbingo.org/get'
   end
 
