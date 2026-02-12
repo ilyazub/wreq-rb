@@ -36,3 +36,4 @@ Cargo.lock
 benchmark-results/
 benchmark-history.csv
 .aider*
+.sisyphus/
