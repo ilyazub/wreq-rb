@@ -1355,6 +1355,113 @@ pub unsafe extern "C" fn rb_client_new_mobile(_class: VALUE) -> VALUE {
     })
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_close(self_val: VALUE) -> VALUE {
+    ffi_guard!({
+        let client_ptr = unwrap_client(self_val);
+        let client = &mut *client_ptr;
+        client.close();
+        Qnil.into()
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_with_headers(self_val: VALUE, arg: VALUE) -> VALUE {
+    ffi_guard!({
+        let client_ptr = unwrap_client(self_val);
+        let client = &mut *client_ptr;
+        let magnus_arg = magnus::Value::from_raw(arg);
+        match magnus::r_hash::RHash::try_convert(magnus_arg) {
+            Ok(headers_hash) => {
+                let mut headers = std::collections::HashMap::new();
+                let _ = headers_hash.foreach(|key: Value, value: Value| {
+                    let key_str = if let Some(sym) = Symbol::from_value(key) {
+                        sym.name().unwrap_or_default().to_string()
+                    } else {
+                        String::try_convert(key).unwrap_or_default()
+                    };
+                    let value_str = String::try_convert(value).unwrap_or_default();
+                    headers.insert(key_str, value_str);
+                    Ok(ForEach::Continue)
+                });
+                let new_client = client.with_headers(headers);
+                wrap_client(new_client)
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("with_headers() requires a Hash").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_timeout(self_val: VALUE, arg: VALUE) -> VALUE {
+    ffi_guard!({
+        let client_ptr = unwrap_client(self_val);
+        let client = &mut *client_ptr;
+        let magnus_arg = magnus::Value::from_raw(arg);
+        match f64::try_convert(magnus_arg) {
+            Ok(secs) => {
+                let new_client = client.timeout(secs);
+                wrap_client(new_client)
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("timeout() failed").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_with_proxy(self_val: VALUE, arg: VALUE) -> VALUE {
+    ffi_guard!({
+        let client_ptr = unwrap_client(self_val);
+        let client = &mut *client_ptr;
+        let magnus_arg = magnus::Value::from_raw(arg);
+        match String::try_convert(magnus_arg) {
+            Ok(proxy) => {
+                match client.with_proxy(proxy) {
+                    Ok(new_client) => wrap_client(new_client),
+                    Err(_) => {
+                        let msg = std::ffi::CString::new("with_proxy() failed").unwrap();
+                        rb_raise(rb_eRuntimeError, msg.as_ptr());
+                        Qnil.into()
+                    }
+                }
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("with_proxy() failed").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_cookies(self_val: VALUE, arg: VALUE) -> VALUE {
+    ffi_guard!({
+        let client_ptr = unwrap_client(self_val);
+        let client = &mut *client_ptr;
+        let magnus_arg = magnus::Value::from_raw(arg);
+        match magnus::r_hash::RHash::try_convert(magnus_arg) {
+            Ok(cookies_hash) => {
+                let new_client = client.cookies(cookies_hash);
+                wrap_client(new_client)
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("cookies() failed").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
 // Raw rb-sys Init function (will replace #[magnus::init])
 // TODO: Implement module/class definitions
 #[unsafe(no_mangle)]
