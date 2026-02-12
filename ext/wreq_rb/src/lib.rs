@@ -386,8 +386,12 @@ impl Clone for ClientWrap {
 }
 
 // TypedData for RbHttpClient (rb-sys migration)
-unsafe extern "C" fn client_free(_data: *mut std::ffi::c_void) {
-    // TODO: Implement
+unsafe extern "C" fn client_free(data: *mut std::ffi::c_void) {
+    if !data.is_null() {
+        unsafe {
+            drop(Box::from_raw(data as *mut RbHttpClient));
+        }
+    }
 }
 
 unsafe extern "C" fn client_size(_data: *const std::ffi::c_void) -> usize {
