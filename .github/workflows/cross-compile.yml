@@ -24,8 +24,6 @@ jobs:
     name: Build for ${{ matrix.ruby-platform }}
     needs: ci-data
     runs-on: ubuntu-latest
-    env:
-      BUNDLE_WITHOUT: development
     strategy:
       fail-fast: false
       matrix:
@@ -36,6 +34,9 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.4"
+
+      - name: Exclude benchmark gems from cross-compile
+        run: bundle config set without benchmark
 
       - uses: oxidize-rb/actions/cross-gem@v1
         id: cross-gem
