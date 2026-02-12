@@ -1087,6 +1087,27 @@ impl RbHttpResponse {
     }
 }
 
+// Helper functions for wrapping/unwrapping RbHttpResponse
+unsafe fn wrap_response(response: RbHttpResponse) -> VALUE {
+    let boxed = Box::new(response);
+    let ptr = Box::into_raw(boxed) as *mut std::ffi::c_void;
+    rb_sys::TypedData_Wrap_Struct(
+        get_response_type() as *const _ as *mut _,
+        get_response_type(),
+        ptr
+    )
+}
+
+unsafe fn unwrap_response(value: VALUE) -> *mut RbHttpResponse {
+    let mut ptr: *mut RbHttpResponse = std::ptr::null_mut();
+    rb_sys::TypedData_Get_Struct(
+        value,
+        get_response_type(),
+        &mut ptr as *mut *mut RbHttpResponse as *mut *mut std::ffi::c_void
+    );
+    ptr
+}
+
 fn rb_get(args: &[Value]) -> Result<RbHttpResponse, MagnusError> {
     let client = RbHttpClient::new()?;
     client.get(args)
