@@ -548,27 +548,23 @@ class WreqTest < Minitest::Test
   end
 
   def test_encoding_chainable
-    skip 'requires network'
     response = HTTP.encoding('UTF-8').get('https://httpbingo.org/get')
     assert_equal 200, response.code
   end
 
   def test_cookies_parsing
-    skip 'requires network'
     response = HTTP.get('https://httpbingo.org/cookies/set?test_cookie=test_value')
     cookies = response.cookies
     assert_instance_of Hash, cookies
   end
 
   def test_cookies_empty
-    skip 'requires network'
     response = HTTP.get('https://httpbingo.org/get')
     cookies = response.cookies
     assert_instance_of Hash, cookies
   end
 
   def test_encoding_applied_to_response
-    skip 'requires network'
     response = HTTP.encoding('UTF-8').get('https://httpbingo.org/get')
     assert_equal 200, response.status
     body = JSON.parse(response.body)
