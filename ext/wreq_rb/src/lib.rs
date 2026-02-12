@@ -1313,6 +1313,48 @@ pub unsafe extern "C" fn rb_response_headers(self_val: VALUE) -> VALUE {
     })
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_new(_class: VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => wrap_client(client),
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create HTTP client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                unreachable!()
+            }
+        }
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_new_desktop(_class: VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new_desktop() {
+            Ok(client) => wrap_client(client),
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create desktop HTTP client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                unreachable!()
+            }
+        }
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rb_client_new_mobile(_class: VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new_mobile() {
+            Ok(client) => wrap_client(client),
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create mobile HTTP client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                unreachable!()
+            }
+        }
+    })
+}
+
 // Raw rb-sys Init function (will replace #[magnus::init])
 // TODO: Implement module/class definitions
 #[unsafe(no_mangle)]
