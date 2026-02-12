@@ -25,7 +25,7 @@ Gem::Specification.new do |spec|
   spec.extra_rdoc_files = ["README.md", "LICENSE.txt"]
 
   # needed until rubygems supports Rust support is out of beta
-  spec.add_dependency "rb_sys", "~> 0.9.63"
+  spec.add_dependency "rb_sys", "~> 0.9.124"
 
   # only needed when developing or packaging your gem
   spec.add_development_dependency "rake", "~> 13.0"

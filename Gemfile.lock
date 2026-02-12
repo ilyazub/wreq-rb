@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     wreq-rb (1.0.0)
-      rb_sys (~> 0.9.63)
+      rb_sys (~> 0.9.124)
 
 GEM
   remote: https://rubygems.org/
