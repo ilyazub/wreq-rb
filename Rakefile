@@ -93,48 +93,7 @@ namespace "gem" do
   end
 end
 
-require "ruby_memcheck"
-
-namespace :test do
-  desc "Run memory checks using ruby_memcheck"
-  task :memcheck do
-    RubyMemcheck.config do |config|
-      config.binary_name = 'wreq_rb'
-      # Configure suppressions for known false positives
-      config.suppressions = [
-        # Add specific suppressions if needed
-      ]
-      
-      # Set the test command to run
-      config.binary = "ruby"
-      config.command = "test/memory_leak_test.rb"
-      
-      # Configure Valgrind options
-      config.valgrind.options = %w[
-        --leak-check=full
-        --show-leak-kinds=all
-        --track-origins=yes
-        --error-exitcode=1
-      ]
-    end
-
-    RubyMemcheck.run
-  end
-
-  desc "Run quick memory check"
-  task :memcheck_quick do
-    RubyMemcheck.config do |config|
-      config.binary = "ruby"
-      config.command = "test/memory_leak_test.rb --quick"
-      config.valgrind.options = %w[--leak-check=full]
-    end
-
-    RubyMemcheck.run
-  end
-end
-
-# Default memory check task
-task memcheck: "test:memcheck" 
+ 
 
 # Development tasks
 task :fmt do
@@ -163,18 +122,12 @@ namespace :benchmark do
     puts "Running HTTP clients benchmark..."
     ruby 'benchmark/http_clients_benchmark.rb'
   end
-
-  desc "Run HTTP clients benchmark"
-  task :http_clients_sh do
-    puts "Running HTTP clients benchmark..."
-    sh 'benchmark/http_clients_benchmark.sh'
-  end
 end
 
 desc "Run all benchmarks"
-task :benchmark => ['benchmark:http_clients_rb', 'benchmark:http_clients_sh']
+task :benchmark => ['benchmark:http_clients_rb']
 
-task default: %i[compile test benchmark] do
+task default: %i[compile test] do
   if ENV['CROSS_COMPILE']
     Rake::Task[:cross_compile].invoke
   end

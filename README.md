@@ -238,47 +238,6 @@ Comparison:
 
 As shown above, curb is the fastest client, with typhoeus following closely. Wreq-rb provides excellent performance, significantly outperforming both http.rb and httpx in sequential operations.
 
-### Benchmark History
-
-Benchmarks are automatically run on every push to the master branch using GitHub Actions. This allows us to track performance over time and ensure wreq-rb maintains its performance advantage.
-
-#### Performance Trend Visualization
-
-Benchmark charts are generated for multiple Ruby versions (2.7, 3.0, 3.1, 3.2, 3.3) to track performance across different Ruby implementations.
-
-##### Combined Performance Comparison
-The following chart shows how wreq-rb compares to other HTTP clients across all tested Ruby versions:
-
-![Combined HTTP Client Performance](https://github.com/0x676e67/wreq-rb/raw/main/docs/assets/combined_time_chart.png)
-
-As shown in our latest benchmarks, curb is the fastest client, with typhoeus being a close second. Wreq-rb provides excellent performance, significantly outperforming both HTTP.rb and httpx across all Ruby versions.
-
-##### Ruby 2.7 (default)
-![Request Time Benchmark Chart (Ruby 2.7)](https://github.com/0x676e67/wreq-rb/raw/main/docs/assets/time_chart-2.7.png)
-![Requests Per Second Benchmark Chart (Ruby 2.7)](https://github.com/0x676e67/wreq-rb/raw/main/docs/assets/rps_chart-2.7.png)
-
-For performance charts of other Ruby versions, see the [benchmark summary page](https://github.com/0x676e67/wreq-rb/blob/main/docs/assets/benchmark_summary.md).
-
-*Note: These charts are automatically generated during CI runs. The latest charts can be found in the GitHub Actions artifacts.*
-
-#### Raw Benchmark Data
-
-You can find historical benchmark results in the GitHub Actions artifacts. Each run stores:
-- A detailed benchmark result for each Ruby version
-- CSV files with historical benchmark data for each Ruby version
-- Graphviz charts in PNG and SVG formats
-
-To visualize benchmark history, download the `benchmark-history-{ruby_version}.csv` artifact and use the provided script:
-
-```
-$ script/visualize_benchmarks.rb -f benchmark-history-2.7.csv
-```
-
-Options:
-- `-f, --file FILE` - Specify the CSV file path
-- `-m, --metric TYPE` - Metric to visualize (time or requests_per_second)
-- `-l, --limit NUM` - Limit to last N entries
-
 ## Development
 
 After checking out the repo, install dependencies and build the extension:
