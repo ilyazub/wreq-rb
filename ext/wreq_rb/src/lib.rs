@@ -1,4 +1,7 @@
 use rb_sys::*;
+use std::ffi::{c_int, c_long, CString, CStr};
+use std::os::raw::c_char;
+use std::ptr;
 use magnus::r_hash::ForEach;
 use magnus::{
     Error as MagnusError, IntoValue, Module, Object, RHash, Symbol, TryConvert, Value, exception,
