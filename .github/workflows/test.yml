@@ -14,7 +14,7 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest]
-        ruby: ['3.0', '3.1', '3.2', '3.3', '3.4']
+        ruby: ['2.7', '3.0', '3.1', '3.2', '3.3', '3.4']
         
     runs-on: ${{ matrix.os }}
     
@@ -24,18 +24,11 @@ jobs:
       - name: Install cURL Headers and Build Dependencies
         run: sudo apt-get update && sudo apt-get install -y cmake perl libclang-dev libcurl4-openssl-dev
 
-      - uses: ./.github/actions/setup-rust
-        with:
-          target: native
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
+          cargo-cache: true
           
-      - name: Install dependencies
-        run: bundle install
-        
       - name: Run tests
-        run: bundle exec rake test 
+        run: bundle exec rake test
