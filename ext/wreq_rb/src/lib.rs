@@ -1211,7 +1211,7 @@ fn rb_accept(accept_value: Value) -> Result<RbHttpClient, MagnusError> {
     RbHttpClient::new()?.accept(accept_value)
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_response_status(self_val: VALUE) -> VALUE {
     ffi_guard!({
         let response_ptr = unwrap_response(self_val);
@@ -1221,7 +1221,7 @@ pub unsafe extern "C" fn rb_response_status(self_val: VALUE) -> VALUE {
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_response_code(self_val: VALUE) -> VALUE {
     ffi_guard!({
         let response_ptr = unwrap_response(self_val);
@@ -1231,7 +1231,7 @@ pub unsafe extern "C" fn rb_response_code(self_val: VALUE) -> VALUE {
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_response_body(self_val: VALUE) -> VALUE {
     ffi_guard!({
         let response_ptr = unwrap_response(self_val);
@@ -1242,7 +1242,7 @@ pub unsafe extern "C" fn rb_response_body(self_val: VALUE) -> VALUE {
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_response_to_s(self_val: VALUE) -> VALUE {
     ffi_guard!({
         let response_ptr = unwrap_response(self_val);
@@ -1253,7 +1253,7 @@ pub unsafe extern "C" fn rb_response_to_s(self_val: VALUE) -> VALUE {
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_response_uri(self_val: VALUE) -> VALUE {
     ffi_guard!({
         let response_ptr = unwrap_response(self_val);
@@ -1264,7 +1264,7 @@ pub unsafe extern "C" fn rb_response_uri(self_val: VALUE) -> VALUE {
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_response_content_type(self_val: VALUE) -> VALUE {
     ffi_guard!({
         let response_ptr = unwrap_response(self_val);
@@ -1279,7 +1279,7 @@ pub unsafe extern "C" fn rb_response_content_type(self_val: VALUE) -> VALUE {
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_response_charset(self_val: VALUE) -> VALUE {
     ffi_guard!({
         let response_ptr = unwrap_response(self_val);
@@ -1294,7 +1294,7 @@ pub unsafe extern "C" fn rb_response_charset(self_val: VALUE) -> VALUE {
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_response_headers(self_val: VALUE) -> VALUE {
     ffi_guard!({
         let response_ptr = unwrap_response(self_val);
@@ -1313,7 +1313,7 @@ pub unsafe extern "C" fn rb_response_headers(self_val: VALUE) -> VALUE {
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_new(_class: VALUE) -> VALUE {
     ffi_guard!({
         match RbHttpClient::new() {
@@ -1327,7 +1327,7 @@ pub unsafe extern "C" fn rb_client_new(_class: VALUE) -> VALUE {
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_new_desktop(_class: VALUE) -> VALUE {
     ffi_guard!({
         match RbHttpClient::new_desktop() {
@@ -1341,7 +1341,7 @@ pub unsafe extern "C" fn rb_client_new_desktop(_class: VALUE) -> VALUE {
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_new_mobile(_class: VALUE) -> VALUE {
     ffi_guard!({
         match RbHttpClient::new_mobile() {
@@ -1355,7 +1355,7 @@ pub unsafe extern "C" fn rb_client_new_mobile(_class: VALUE) -> VALUE {
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_close(self_val: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1365,7 +1365,7 @@ pub unsafe extern "C" fn rb_client_close(self_val: VALUE) -> VALUE {
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_with_headers(self_val: VALUE, arg: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1396,7 +1396,7 @@ pub unsafe extern "C" fn rb_client_with_headers(self_val: VALUE, arg: VALUE) -> 
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_timeout(self_val: VALUE, arg: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1416,7 +1416,7 @@ pub unsafe extern "C" fn rb_client_timeout(self_val: VALUE, arg: VALUE) -> VALUE
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_with_proxy(self_val: VALUE, arg: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1442,7 +1442,7 @@ pub unsafe extern "C" fn rb_client_with_proxy(self_val: VALUE, arg: VALUE) -> VA
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_cookies(self_val: VALUE, arg: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1462,7 +1462,7 @@ pub unsafe extern "C" fn rb_client_cookies(self_val: VALUE, arg: VALUE) -> VALUE
      })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_basic_auth(self_val: VALUE, arg: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1488,7 +1488,7 @@ pub unsafe extern "C" fn rb_client_basic_auth(self_val: VALUE, arg: VALUE) -> VA
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_auth(self_val: VALUE, arg: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1508,7 +1508,7 @@ pub unsafe extern "C" fn rb_client_auth(self_val: VALUE, arg: VALUE) -> VALUE {
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_accept(self_val: VALUE, arg: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1525,7 +1525,7 @@ pub unsafe extern "C" fn rb_client_accept(self_val: VALUE, arg: VALUE) -> VALUE 
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_encoding(self_val: VALUE, arg: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1545,7 +1545,7 @@ pub unsafe extern "C" fn rb_client_encoding(self_val: VALUE, arg: VALUE) -> VALU
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_headers(self_val: VALUE, arg: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1565,7 +1565,7 @@ pub unsafe extern "C" fn rb_client_headers(self_val: VALUE, arg: VALUE) -> VALUE
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_follow(argc: c_int, argv: *const VALUE, self_val: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1593,7 +1593,7 @@ pub unsafe extern "C" fn rb_client_follow(argc: c_int, argv: *const VALUE, self_
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_via(argc: c_int, argv: *const VALUE, self_val: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1621,7 +1621,7 @@ pub unsafe extern "C" fn rb_client_via(argc: c_int, argv: *const VALUE, self_val
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_get(argc: c_int, argv: *const VALUE, self_val: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1649,7 +1649,7 @@ pub unsafe extern "C" fn rb_client_get(argc: c_int, argv: *const VALUE, self_val
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_post(argc: c_int, argv: *const VALUE, self_val: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1677,7 +1677,7 @@ pub unsafe extern "C" fn rb_client_post(argc: c_int, argv: *const VALUE, self_va
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_put(argc: c_int, argv: *const VALUE, self_val: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1705,7 +1705,7 @@ pub unsafe extern "C" fn rb_client_put(argc: c_int, argv: *const VALUE, self_val
      })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_delete(argc: c_int, argv: *const VALUE, self_val: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1733,7 +1733,7 @@ pub unsafe extern "C" fn rb_client_delete(argc: c_int, argv: *const VALUE, self_
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_head(argc: c_int, argv: *const VALUE, self_val: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1761,7 +1761,7 @@ pub unsafe extern "C" fn rb_client_head(argc: c_int, argv: *const VALUE, self_va
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_patch(argc: c_int, argv: *const VALUE, self_val: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1789,7 +1789,7 @@ pub unsafe extern "C" fn rb_client_patch(argc: c_int, argv: *const VALUE, self_v
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_request(argc: c_int, argv: *const VALUE, self_val: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1817,7 +1817,7 @@ pub unsafe extern "C" fn rb_client_request(argc: c_int, argv: *const VALUE, self
     })
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn rb_client_persistent(argc: c_int, argv: *const VALUE, self_val: VALUE) -> VALUE {
     ffi_guard!({
         let client_ptr = unwrap_client(self_val);
@@ -1838,6 +1838,510 @@ pub unsafe extern "C" fn rb_client_persistent(argc: c_int, argv: *const VALUE, s
             Ok(new_client) => wrap_client(new_client),
             Err(_) => {
                 let msg = std::ffi::CString::new("persistent() failed").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_get(argc: c_int, argv: *const VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let args: Vec<magnus::Value> = if argc > 0 {
+                    std::slice::from_raw_parts(argv, argc as usize)
+                        .iter()
+                        .map(|&v| magnus::Value::from_raw(v))
+                        .collect()
+                } else {
+                    vec![]
+                };
+                match client.get(&args) {
+                    Ok(result) => wrap_response(result),
+                    Err(_) => {
+                        let msg = std::ffi::CString::new("get() failed").unwrap();
+                        rb_raise(rb_eRuntimeError, msg.as_ptr());
+                        Qnil.into()
+                    }
+                }
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_desktop() -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new_desktop() {
+            Ok(client) => wrap_client(client),
+            Err(_) => {
+                let msg = std::ffi::CString::new("desktop() failed").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_mobile() -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new_mobile() {
+            Ok(client) => wrap_client(client),
+            Err(_) => {
+                let msg = std::ffi::CString::new("mobile() failed").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_post(argc: c_int, argv: *const VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let args: Vec<magnus::Value> = if argc > 0 {
+                    std::slice::from_raw_parts(argv, argc as usize)
+                        .iter()
+                        .map(|&v| magnus::Value::from_raw(v))
+                        .collect()
+                } else {
+                    vec![]
+                };
+                match client.post(&args) {
+                    Ok(result) => wrap_response(result),
+                    Err(_) => {
+                        let msg = std::ffi::CString::new("post() failed").unwrap();
+                        rb_raise(rb_eRuntimeError, msg.as_ptr());
+                        Qnil.into()
+                    }
+                }
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_put(argc: c_int, argv: *const VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let args: Vec<magnus::Value> = if argc > 0 {
+                    std::slice::from_raw_parts(argv, argc as usize)
+                        .iter()
+                        .map(|&v| magnus::Value::from_raw(v))
+                        .collect()
+                } else {
+                    vec![]
+                };
+                match client.put(&args) {
+                    Ok(result) => wrap_response(result),
+                    Err(_) => {
+                        let msg = std::ffi::CString::new("put() failed").unwrap();
+                        rb_raise(rb_eRuntimeError, msg.as_ptr());
+                        Qnil.into()
+                    }
+                }
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_delete(argc: c_int, argv: *const VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let args: Vec<magnus::Value> = if argc > 0 {
+                    std::slice::from_raw_parts(argv, argc as usize)
+                        .iter()
+                        .map(|&v| magnus::Value::from_raw(v))
+                        .collect()
+                } else {
+                    vec![]
+                };
+                match client.delete(&args) {
+                    Ok(result) => wrap_response(result),
+                    Err(_) => {
+                        let msg = std::ffi::CString::new("delete() failed").unwrap();
+                        rb_raise(rb_eRuntimeError, msg.as_ptr());
+                        Qnil.into()
+                    }
+                }
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_head(argc: c_int, argv: *const VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let args: Vec<magnus::Value> = if argc > 0 {
+                    std::slice::from_raw_parts(argv, argc as usize)
+                        .iter()
+                        .map(|&v| magnus::Value::from_raw(v))
+                        .collect()
+                } else {
+                    vec![]
+                };
+                match client.head(&args) {
+                    Ok(result) => wrap_response(result),
+                    Err(_) => {
+                        let msg = std::ffi::CString::new("head() failed").unwrap();
+                        rb_raise(rb_eRuntimeError, msg.as_ptr());
+                        Qnil.into()
+                    }
+                }
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_patch(argc: c_int, argv: *const VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let args: Vec<magnus::Value> = if argc > 0 {
+                    std::slice::from_raw_parts(argv, argc as usize)
+                        .iter()
+                        .map(|&v| magnus::Value::from_raw(v))
+                        .collect()
+                } else {
+                    vec![]
+                };
+                match client.patch(&args) {
+                    Ok(result) => wrap_response(result),
+                    Err(_) => {
+                        let msg = std::ffi::CString::new("patch() failed").unwrap();
+                        rb_raise(rb_eRuntimeError, msg.as_ptr());
+                        Qnil.into()
+                    }
+                }
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_request(argc: c_int, argv: *const VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let args: Vec<magnus::Value> = if argc > 0 {
+                    std::slice::from_raw_parts(argv, argc as usize)
+                        .iter()
+                        .map(|&v| magnus::Value::from_raw(v))
+                        .collect()
+                } else {
+                    vec![]
+                };
+                match client.request(&args) {
+                    Ok(result) => wrap_response(result),
+                    Err(_) => {
+                        let msg = std::ffi::CString::new("request() failed").unwrap();
+                        rb_raise(rb_eRuntimeError, msg.as_ptr());
+                        Qnil.into()
+                    }
+                }
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_persistent(argc: c_int, argv: *const VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let args: Vec<magnus::Value> = if argc > 0 {
+                    std::slice::from_raw_parts(argv, argc as usize)
+                        .iter()
+                        .map(|&v| magnus::Value::from_raw(v))
+                        .collect()
+                } else {
+                    vec![]
+                };
+                match client.persistent(&args) {
+                    Ok(result) => wrap_client(result),
+                    Err(_) => {
+                        let msg = std::ffi::CString::new("persistent() failed").unwrap();
+                        rb_raise(rb_eRuntimeError, msg.as_ptr());
+                        Qnil.into()
+                    }
+                }
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_headers(arg: VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let magnus_arg = magnus::Value::from_raw(arg);
+                let new_client = client.headers(magnus_arg.try_convert::<magnus::RHash>().unwrap_or_default());
+                wrap_client(new_client)
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_follow(argc: c_int, argv: *const VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let args: Vec<magnus::Value> = if argc > 0 {
+                    std::slice::from_raw_parts(argv, argc as usize)
+                        .iter()
+                        .map(|&v| magnus::Value::from_raw(v))
+                        .collect()
+                } else {
+                    vec![]
+                };
+                match client.follow(&args) {
+                    Ok(result) => wrap_client(result),
+                    Err(_) => {
+                        let msg = std::ffi::CString::new("follow() failed").unwrap();
+                        rb_raise(rb_eRuntimeError, msg.as_ptr());
+                        Qnil.into()
+                    }
+                }
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_timeout(arg: VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let magnus_arg = magnus::Value::from_raw(arg);
+                let timeout_f64 = magnus_arg.try_convert::<f64>().unwrap_or(0.0);
+                let new_client = client.timeout(timeout_f64);
+                wrap_client(new_client)
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_proxy(arg: VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let magnus_arg = magnus::Value::from_raw(arg);
+                let proxy_str = magnus_arg.try_convert::<String>().unwrap_or_default();
+                match client.with_proxy(proxy_str) {
+                    Ok(new_client) => wrap_client(new_client),
+                    Err(_) => {
+                        let msg = std::ffi::CString::new("proxy() failed").unwrap();
+                        rb_raise(rb_eRuntimeError, msg.as_ptr());
+                        Qnil.into()
+                    }
+                }
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_via(argc: c_int, argv: *const VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let args: Vec<magnus::Value> = if argc > 0 {
+                    std::slice::from_raw_parts(argv, argc as usize)
+                        .iter()
+                        .map(|&v| magnus::Value::from_raw(v))
+                        .collect()
+                } else {
+                    vec![]
+                };
+                match client.via(&args) {
+                    Ok(result) => wrap_client(result),
+                    Err(_) => {
+                        let msg = std::ffi::CString::new("via() failed").unwrap();
+                        rb_raise(rb_eRuntimeError, msg.as_ptr());
+                        Qnil.into()
+                    }
+                }
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_cookies(arg: VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let magnus_arg = magnus::Value::from_raw(arg);
+                let new_client = client.cookies(magnus_arg.try_convert::<magnus::RHash>().unwrap_or_default());
+                wrap_client(new_client)
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_basic_auth(arg: VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let magnus_arg = magnus::Value::from_raw(arg);
+                match client.basic_auth(magnus_arg.try_convert::<magnus::RHash>().unwrap_or_default()) {
+                    Ok(new_client) => wrap_client(new_client),
+                    Err(_) => {
+                        let msg = std::ffi::CString::new("basic_auth() failed").unwrap();
+                        rb_raise(rb_eRuntimeError, msg.as_ptr());
+                        Qnil.into()
+                    }
+                }
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_auth(arg: VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let magnus_arg = magnus::Value::from_raw(arg);
+                let auth_str = magnus_arg.try_convert::<String>().unwrap_or_default();
+                let new_client = client.auth(auth_str);
+                wrap_client(new_client)
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_accept(arg: VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let magnus_arg = magnus::Value::from_raw(arg);
+                match client.accept(magnus_arg) {
+                    Ok(new_client) => wrap_client(new_client),
+                    Err(_) => {
+                        let msg = std::ffi::CString::new("accept() failed").unwrap();
+                        rb_raise(rb_eRuntimeError, msg.as_ptr());
+                        Qnil.into()
+                    }
+                }
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
+                rb_raise(rb_eRuntimeError, msg.as_ptr());
+                Qnil.into()
+            }
+        }
+    })
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rb_http_encoding(arg: VALUE) -> VALUE {
+    ffi_guard!({
+        match RbHttpClient::new() {
+            Ok(client) => {
+                let magnus_arg = magnus::Value::from_raw(arg);
+                let enc_str = magnus_arg.try_convert::<String>().unwrap_or_default();
+                let new_client = client.encoding(enc_str);
+                wrap_client(new_client)
+            }
+            Err(_) => {
+                let msg = std::ffi::CString::new("Failed to create client").unwrap();
                 rb_raise(rb_eRuntimeError, msg.as_ptr());
                 Qnil.into()
             }
