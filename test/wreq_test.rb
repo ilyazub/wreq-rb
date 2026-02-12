@@ -134,7 +134,7 @@ class WreqTest < Minitest::Test
 
   def test_post_request
     response = HTTP.post(
-      'https://httpbingo.org/post',
+      'https://postman-echo.com/post',
       body: 'test body'
     )
 
@@ -188,7 +188,7 @@ class WreqTest < Minitest::Test
     response = HTTP
                .headers(content_type: 'application/json')
                .post(
-                 'https://httpbingo.org/post',
+                 'https://postman-echo.com/post',
                  body: JSON.generate({ name: 'test', value: 123 })
                )
 
@@ -199,7 +199,7 @@ class WreqTest < Minitest::Test
 
   def test_put_request
     response = HTTP.put(
-      'https://httpbingo.org/put',
+      'https://postman-echo.com/put',
       body: 'updated content'
     )
 
@@ -221,7 +221,7 @@ class WreqTest < Minitest::Test
 
   def test_patch_request
     response = HTTP.patch(
-      'https://httpbingo.org/patch',
+      'https://postman-echo.com/patch',
       body: 'patched content'
     )
 
@@ -488,32 +488,32 @@ class WreqTest < Minitest::Test
   end
 
   def test_post_with_json_option
-    response = HTTP.post('https://httpbingo.org/post', json: { name: 'test', value: 123 })
+    response = HTTP.post('https://postman-echo.com/post', json: { name: 'test', value: 123 })
     assert_equal 200, response.code
     body = JSON.parse(response.body)
     assert_equal 'test', body['json']['name']
     assert_equal 123, body['json']['value']
-    assert body['headers']['Content-Type'].include?('application/json')
+    assert body['headers']['content-type'].include?('application/json')
   end
 
   def test_post_with_form_option
-    response = HTTP.post('https://httpbingo.org/post', form: { name: 'test', email: 'a@b.com' })
+    response = HTTP.post('https://postman-echo.com/post', form: { name: 'test', email: 'a@b.com' })
     assert_equal 200, response.code
     body = JSON.parse(response.body)
     assert_equal 'test', body['form']['name']
     assert_equal 'a@b.com', body['form']['email']
-    assert body['headers']['Content-Type'].include?('application/x-www-form-urlencoded')
+    assert body['headers']['content-type'].include?('application/x-www-form-urlencoded')
   end
 
   def test_post_with_body_option_backward_compat
-    response = HTTP.post('https://httpbingo.org/post', body: 'raw string data')
+    response = HTTP.post('https://postman-echo.com/post', body: 'raw string data')
     assert_equal 200, response.code
     body = JSON.parse(response.body)
     assert_equal 'raw string data', body['data']
   end
 
   def test_get_with_params_option
-    response = HTTP.get('https://httpbingo.org/get', params: { q: 'search', page: '2' })
+    response = HTTP.get('https://postman-echo.com/get', params: { q: 'search', page: '2' })
     assert_equal 200, response.code
     body = JSON.parse(response.body)
     assert_equal 'search', body['args']['q']
@@ -539,7 +539,7 @@ class WreqTest < Minitest::Test
   end
 
   def test_chainable_with_params
-    response = HTTP.headers(accept: 'application/json').get('https://httpbingo.org/get', params: { test: 'value' })
+    response = HTTP.headers(accept: 'application/json').get('https://postman-echo.com/get', params: { test: 'value' })
     assert_equal 200, response.code
     body = JSON.parse(response.body)
     assert_equal 'value', body['args']['test']
@@ -687,7 +687,7 @@ class WreqTest < Minitest::Test
   end
 
   def test_put_with_json_option
-    response = HTTP.put('https://httpbingo.org/put', json: { name: 'put-test', value: 7 })
+    response = HTTP.put('https://postman-echo.com/put', json: { name: 'put-test', value: 7 })
     assert response.status.ok?
     body = response.parse
     assert_equal 'put-test', body['json']['name']
@@ -695,7 +695,7 @@ class WreqTest < Minitest::Test
   end
 
   def test_patch_with_form_option
-    response = HTTP.patch('https://httpbingo.org/patch', form: { name: 'patch-test', value: 'ok' })
+    response = HTTP.patch('https://postman-echo.com/patch', form: { name: 'patch-test', value: 'ok' })
     assert response.status.ok?
     body = response.parse
     assert_equal 'patch-test', body['form']['name']

@@ -176,7 +176,7 @@ fn extract_options(args: &[Value]) -> Result<RequestOptions, MagnusError> {
             if let Ok(body_str) = String::try_convert(body_val) {
                 return Ok(RequestOptions {
                     body: Some(body_str),
-                    content_type: None,
+                    content_type: Some("text/plain; charset=utf-8".to_string()),
                 });
             }
         }
@@ -340,14 +340,8 @@ fn execute_request(
                 header_map.insert(HeaderName::from_static("content-type"), val);
             }
         }
-    } else if matches!(method, HttpMethod::Post | HttpMethod::Put | HttpMethod::Patch)
-        && !has_content_type
-    {
-        header_map.insert(
-            HeaderName::from_static("content-type"),
-            HeaderValue::from_static("application/octet-stream"),
-        );
     }
+    // Don't automatically set application/octet-stream - let the server handle defaults
 
     request = request.headers(header_map);
 
