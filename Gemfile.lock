@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     wreq-rb (1.0.0)
-      rb_sys (~> 0.9.39)
+      rb_sys (~> 0.9.63)
 
 GEM
   remote: https://rubygems.org/
@@ -44,9 +44,9 @@ GEM
     rake (13.2.1)
     rake-compiler (1.2.9)
       rake
-    rake-compiler-dock (1.9.1)
-    rb_sys (0.9.111)
-      rake-compiler-dock (= 1.9.1)
+    rake-compiler-dock (1.11.0)
+    rb_sys (0.9.124)
+      rake-compiler-dock (= 1.11.0)
     rexml (3.4.1)
     ruby-graphviz (1.2.5)
       rexml
