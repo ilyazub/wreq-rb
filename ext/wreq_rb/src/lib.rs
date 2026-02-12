@@ -134,6 +134,96 @@ fn get_runtime() -> Result<Arc<Runtime>, MagnusError> {
     Ok(Arc::clone(&RUNTIME))
 }
 
+
+unsafe fn ruby_value_to_json(value: VALUE) -> Result<serde_json::Value, String> {
+    let value_type = RB_TYPE(value);
+    
+    match value_type {
+        ruby_value_type::RUBY_T_NIL => Ok(serde_json::Value::Null),
+        ruby_value_type::RUBY_T_TRUE => Ok(serde_json::Value::Bool(true)),
+        ruby_value_type::RUBY_T_FALSE => Ok(serde_json::Value::Bool(false)),
+        ruby_value_type::RUBY_T_FIXNUM => Ok(serde_json::json!(rb_num2long(value))),
+        ruby_value_type::RUBY_T_FLOAT => Ok(serde_json::json!(rb_float_value(value))),
+        ruby_value_type::RUBY_T_STRING => {
+            let mut val = value;
+            let c_str = rb_string_value_cstr(&mut val);
+            let rust_str = CStr::from_ptr(c_str).to_str()
+                .map_err(|e| format!("UTF-8 error: {}", e))?;
+            Ok(serde_json::Value::String(rust_str.to_string()))
+        }
+        ruby_value_type::RUBY_T_SYMBOL => {
+            let id = rb_sym2id(value);
+            let name_ptr = rb_id2name(id);
+            if name_ptr.is_null() {
+                return Err("Symbol conversion failed".to_string());
+            }
+            let rust_str = CStr::from_ptr(name_ptr).to_str()
+                .map_err(|e| format!("UTF-8 error: {}", e))?;
+            Ok(serde_json::Value::String(rust_str.to_string()))
+        }
+        ruby_value_type::RUBY_T_ARRAY => {
+            let len = RARRAY_LEN(value);
+            let mut arr = Vec::with_capacity(len as usize);
+            for i in 0..len {
+                let elem = rb_ary_entry(value, i);
+                arr.push(ruby_value_to_json(elem)?);
+            }
+            Ok(serde_json::Value::Array(arr))
+        }
+        ruby_value_type::RUBY_T_HASH => {
+            struct HashData {
+                map: serde_json::Map<String, serde_json::Value>,
+                error: Option<String>,
+            }
+            
+            extern "C" fn callback(key: VALUE, val: VALUE, arg: VALUE) -> c_int {
+                unsafe {
+                    let data = &mut *(arg as *mut HashData);
+                    let key_str = match ruby_value_to_json(key) {
+                        Ok(serde_json::Value::String(s)) => s,
+                        Ok(_) => {
+                            data.error = Some("Hash key not string".to_string());
+                            return 1;
+                        }
+                        Err(e) => {
+                            data.error = Some(e);
+                            return 1;
+                        }
+                    };
+                    match ruby_value_to_json(val) {
+                        Ok(json_val) => {
+                            data.map.insert(key_str, json_val);
+                            0
+                        }
+                        Err(e) => {
+                            data.error = Some(e);
+                            1
+                        }
+                    }
+                }
+            }
+            
+            let mut data = HashData {
+                map: serde_json::Map::new(),
+                error: None,
+            };
+            
+            rb_hash_foreach(
+                value,
+                Some(std::mem::transmute(callback as *const ())),
+                &mut data as *mut HashData as VALUE
+            );
+            
+            if let Some(err) = data.error {
+                return Err(err);
+            }
+            
+            Ok(serde_json::Value::Object(data.map))
+        }
+        _ => Err(format!("Unsupported type: {:?}", value_type))
+    }
+}
+
 struct RequestOptions {
     body: Option<String>,
     content_type: Option<String>,
@@ -154,10 +244,12 @@ fn extract_options(args: &[Value]) -> Result<RequestOptions, MagnusError> {
         let body_key = Symbol::new("body").into_value();
         
         if let Some(json_val) = opts_hash.get(json_key) {
-            let json_str = magnus::eval::<String>(&format!(
-                "require 'json'; JSON.generate({})",
-                json_val
-            ))?;
+            let json_value = unsafe { 
+                ruby_value_to_json(std::mem::transmute(json_val))
+                    .map_err(|e| MagnusError::new(exception::runtime_error(), e))? 
+            };
+            let json_str = serde_json::to_string(&json_value)
+                .map_err(|e| MagnusError::new(exception::runtime_error(), format!("JSON error: {}", e)))?;
             return Ok(RequestOptions {
                 body: Some(json_str),
                 content_type: Some("application/json".to_string()),
