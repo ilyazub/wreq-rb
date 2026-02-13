@@ -1,4 +1,4 @@
-name: Cross-Compile Gem
+name: Build Native Gems
 
 on:
   push:
@@ -7,45 +7,58 @@ on:
   workflow_dispatch:
 
 jobs:
-  ci-data:
-    runs-on: ubuntu-latest
-    outputs:
-      result: ${{ steps.fetch.outputs.result }}
-    steps:
-      - id: fetch
-        uses: oxidize-rb/actions/fetch-ci-data@v1
-        with:
-          supported-ruby-platforms: |
-            exclude: [arm-linux]
-          stable-ruby-versions: |
-            exclude: [head]
-
-  cross-compile:
-    name: Build for ${{ matrix.ruby-platform }}
-    needs: ci-data
-    runs-on: ubuntu-latest
+  build:
+    name: Build / ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        ruby-platform: ${{ fromJSON(needs.ci-data.outputs.result).supported-ruby-platforms }}
+        include:
+          - runner: ubuntu-latest
+            platform: x86_64-linux
+          - runner: ubuntu-24.04-arm
+            platform: aarch64-linux
+          - runner: macos-13
+            platform: x86_64-darwin
+          - runner: macos-14
+            platform: arm64-darwin
+          - runner: windows-latest
+            platform: x64-mingw-ucrt
+
     steps:
       - uses: actions/checkout@v6
 
-      - uses: ruby/setup-ruby@v1
+      - name: Install build deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build nasm clang perl
+
+      - name: Install build deps (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cmake ninja nasm
+
+      - name: Install build deps (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          choco install nasm cmake -y
+          echo "C:\\Program Files\\NASM" >> $GITHUB_PATH
+
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         with:
           ruby-version: "3.4"
+          bundler-cache: true
+          cargo-cache: true
+          cache-version: v0-${{ matrix.platform }}
+        env:
+          BUNDLE_WITHOUT: benchmark
 
-      - name: Exclude benchmark gems from cross-compile
-        run: bundle config set without benchmark
-
-      - uses: oxidize-rb/actions/cross-gem@v1
-        id: cross-gem
-        with:
-          platform: ${{ matrix.ruby-platform }}
-          ruby-versions: ${{ join(fromJSON(needs.ci-data.outputs.result).stable-ruby-versions, ',') }}
+      - name: Build native gem
+        run: bundle exec rake native gem
 
       - uses: actions/upload-artifact@v6
         with:
-          name: cross-gem-${{ matrix.ruby-platform }}
-          path: ${{ steps.cross-gem.outputs.gem-path }}
+          name: native-gem-${{ matrix.platform }}
+          path: pkg/*.gem
           if-no-files-found: error
