@@ -362,11 +362,23 @@ fn execute_request(
         request = request.body(body_str);
     }
 
-    let response = runtime
-        .block_on(request.send())
-        .map_err(wreq_error_to_magnus_error)?;
+    // Release GVL during HTTP I/O (send + response read)
+    let result: Result<RbHttpResponse, String> = gvl::without_gvl(|| {
+        // Send HTTP request
+        let response = match runtime.block_on(request.send()) {
+            Ok(resp) => resp,
+            Err(e) => return Err(format!("HTTP request failed: {}", e)),
+        };
 
-    runtime.block_on(RbHttpResponse::new(response))
+        // Read and process response (decompression happens here)
+        match runtime.block_on(RbHttpResponse::new(response)) {
+            Ok(rb_response) => Ok(rb_response),
+            Err(e) => Err(e.to_string()),
+        }
+    });
+
+    // Convert String errors back to MagnusError after GVL re-acquired
+    result.map_err(|e| MagnusError::new(exception::runtime_error(), e))
 }
 
 #[magnus::wrap(class = "Wreq::HTTP::Client")]
@@ -405,6 +417,10 @@ impl RbHttpClient {
     fn new() -> Result<Self, MagnusError> {
         let client = wreq::Client::builder()
             .emulation(get_random_emulation())
+            .no_gzip()
+            .no_brotli()
+            .no_zstd()
+            .no_deflate()
             .build()
             .map_err(|e| {
                 MagnusError::new(
@@ -432,6 +448,10 @@ impl RbHttpClient {
     fn new_desktop() -> Result<Self, MagnusError> {
         let client = wreq::Client::builder()
             .emulation(get_random_desktop_emulation())
+            .no_gzip()
+            .no_brotli()
+            .no_zstd()
+            .no_deflate()
             .build()
             .map_err(|e| {
                 MagnusError::new(
@@ -459,6 +479,10 @@ impl RbHttpClient {
     fn new_mobile() -> Result<Self, MagnusError> {
         let client = wreq::Client::builder()
             .emulation(get_random_mobile_emulation())
+            .no_gzip()
+            .no_brotli()
+            .no_zstd()
+            .no_deflate()
             .build()
             .map_err(|e| {
                 MagnusError::new(
@@ -538,6 +562,10 @@ impl RbHttpClient {
 
         let client = wreq::Client::builder()
             .emulation(get_random_emulation())
+            .no_gzip()
+            .no_brotli()
+            .no_zstd()
+            .no_deflate()
             .proxy(wreq::Proxy::all(&proxy).map_err(|e| {
                 MagnusError::new(
                     exception::runtime_error(),
@@ -904,6 +932,7 @@ struct ResponseData {
     headers: HashMap<String, String>,
     body: Option<String>,
     url: String,
+    content_length: u64,
 }
 
 #[magnus::wrap(class = "Wreq::HTTP::Response")]
@@ -916,6 +945,12 @@ impl RbHttpResponse {
         let status = response.status().as_u16();
         let url = response.uri().to_string();
 
+        // Read Content-Encoding header BEFORE consuming response
+        let encoding = response.headers()
+            .get("content-encoding")
+            .and_then(|v| v.to_str().ok())
+            .map(|s| s.to_string());
+
         let mut headers = HashMap::new();
         for (name, value) in response.headers().iter() {
             if let Ok(value_str) = value.to_str() {
@@ -923,12 +958,33 @@ impl RbHttpResponse {
             }
         }
 
-        let body = match response.text().await {
-            Ok(text) => text,
-            Err(e) => {
-                eprintln!("Warning: Failed to read response body: {}", e);
-                String::new()
+        // Get raw bytes (compressed when auto-decompression disabled)
+        let raw_bytes = response.bytes().await.map_err(|e| {
+            MagnusError::new(
+                exception::runtime_error(),
+                format!("Failed to read response body: {}", e),
+            )
+        })?;
+
+        let content_length = raw_bytes.len() as u64;
+
+        // Decompress if Content-Encoding present
+        let body = if let Some(encoding_str) = encoding {
+            if encoding_str.trim().is_empty() || encoding_str.eq_ignore_ascii_case("identity") {
+                // Identity = no encoding
+                String::from_utf8_lossy(&raw_bytes).into_owned()
+            } else {
+                // Compressed response — decompress
+                let decompressed = decompress::decompress(&raw_bytes, &encoding_str)
+                    .map_err(|e| MagnusError::new(
+                        exception::runtime_error(),
+                        format!("Decompression failed: {}", e),
+                    ))?;
+                String::from_utf8_lossy(&decompressed).into_owned()
             }
+        } else {
+            // No Content-Encoding header
+            String::from_utf8_lossy(&raw_bytes).into_owned()
         };
 
         Ok(Self {
@@ -937,6 +993,7 @@ impl RbHttpResponse {
                 headers,
                 body: Some(body),
                 url,
+                content_length,
             }),
         })
     }
@@ -950,6 +1007,10 @@ impl RbHttpResponse {
             Some(body) => body.clone(),
             None => String::new(),
         }
+    }
+
+    fn content_length(&self) -> u64 {
+        self.data.content_length
     }
 
     fn to_s(&self) -> String {
@@ -1098,6 +1159,7 @@ fn init(ruby: &magnus::Ruby) -> Result<(), MagnusError> {
     response_class.define_method("uri", method!(RbHttpResponse::uri, 0))?;
     response_class.define_method("code", method!(RbHttpResponse::code, 0))?;
     response_class.define_method("charset", method!(RbHttpResponse::charset, 0))?;
+    response_class.define_method("content_length", method!(RbHttpResponse::content_length, 0))?;
 
     let client_class = http_module.define_class("Client", ruby.class_object())?;
     client_class.define_singleton_method("new", function!(RbHttpClient::new, 0))?;
