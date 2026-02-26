@@ -28,6 +28,9 @@ serde_json = "1.0"
 urlencoding = "2.1"
 lazy_static = "1.4"
 base64 = "0.22"
+flate2 = "1.1.9"
+brotli = "8.0.2"
+zstd = "0.13.3"
 
 [dev-dependencies]
 rb-sys = { version = "0.9.39", features = [

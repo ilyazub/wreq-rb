@@ -18,6 +18,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use tokio::runtime::Runtime;
 use url::Url;
+mod gvl;
+mod decompress;
 use lazy_static::lazy_static;
 
 // Fast random implementation similar to wreq-util crate
